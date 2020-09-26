@@ -70,42 +70,39 @@ class Interpreter
 /* ******LEXICAL ANALYSER****** */
     Token get_next_token()
     {
-        while(current_char != '\0')
+        while(current_char == ' ')
+            skip_whitspace();
+
+        if(current_char == '\0')
+            return Token(EOL, "\0");
+
+
+        string current_char_str;
+        current_char_str = current_char;
+
+        //Means we have a digit
+        if(current_char >= 48 && current_char <= 57)
         {
-            if(current_char == ' ')
-            {
-                skip_whitspace();
-                continue;
-            }
-
-            string current_char_str;
-            current_char_str = current_char;
-
-            //Means we have a digit
-            if(current_char >= 48 && current_char <= 57)
-            {
-                Token token(INTEGER, integer_val());
-                return token;
-            }
-
-            if(current_char == '+')
-            {
-                Token token(PLUS, current_char_str);
-                advance();
-                return token;
-            }
-
-            if(current_char == '-')
-            {
-                Token token(MINUS, current_char_str);
-                advance();
-                return token;
-            }
-
-            //If it isnt a digit or + or -, then some other char, hence show error
-            error();
+            Token token(INTEGER, integer_val());
+            return token;
         }
-        return Token(EOL, "\0");
+
+        if(current_char == '+')
+        {
+            Token token(PLUS, current_char_str);
+            advance();
+            return token;
+        }
+
+        if(current_char == '-')
+        {
+            Token token(MINUS, current_char_str);
+            advance();
+            return token;
+        }
+
+        //If it isnt a digit or + or -, then some other char, hence show error
+        error();
     }
 
     void eat(string type)
