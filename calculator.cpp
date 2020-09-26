@@ -44,7 +44,6 @@ class Interpreter
     void advance()
     {
         pos++;
-        cout<<current_char<<"\n";
         if(pos > text.size()-1)
             current_char = '\0';
         else
@@ -71,7 +70,6 @@ class Interpreter
 /* ******LEXICAL ANALYSER****** */
     Token get_next_token()
     {
-        cout<<"CHAR" <<current_char<<"\n";
         while(current_char != '\0')
         {
             if(current_char == ' ')
@@ -104,7 +102,7 @@ class Interpreter
                 return token;
             }
 
-            //If it isnt a digit or +, then some other char, hence show error
+            //If it isnt a digit or + or -, then some other char, hence show error
             error();
         }
         return Token(EOL, "\0");
@@ -112,8 +110,6 @@ class Interpreter
 
     void eat(string type)
     {
-        // cout<<current_token.type<<"\n";
-        cout<<type<<"\n";
         if(current_token.type == type)
             current_token = get_next_token();
         else
@@ -158,7 +154,7 @@ int main()
     while(true)
     {
         cout<<"calc> ";
-        cin>>text;
+        getline(cin, text);
         if(text.size() == 0)
             continue; //meaning that sometimes we tend to press enter but we still want to give input
 
