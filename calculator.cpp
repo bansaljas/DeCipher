@@ -113,6 +113,13 @@ class Interpreter
             error();
     }
 
+    string term()
+    {
+        Token token = current_token;
+        eat(INTEGER);
+        return token.value;
+    }
+
     public:
         Interpreter(string text) //Constructors have to be public
         {
@@ -125,23 +132,25 @@ class Interpreter
         {
             current_token = get_next_token();
 
-            int value1 = stoi(current_token.value);
-            eat(INTEGER);
+            int result;
 
-            string operator_type = current_token.type;
+            result = stoi(term());
 
-            if(operator_type == "PLUS")
-                eat(PLUS);
-            else
-                eat(MINUS);
+            while(current_token.type != EOL)
+            {
+                if(current_token.type == PLUS)
+                {
+                    eat(PLUS);
+                    result += stoi(term());
+                }
+                else
+                {
+                    eat(MINUS);
+                    result -= stoi(term());
+                }
+            }
 
-            int value2 = stoi(current_token.value);
-            eat(INTEGER);
-
-            if(operator_type == "PLUS")
-                return (value1 + value2);
-            else
-                return (value1 - value2);
+            return result;
         }
 };
 
