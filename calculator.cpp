@@ -28,87 +28,112 @@ ostream& operator<<(ostream &strm, const Token &token) {
     return strm << "(" << token.type << ", "<<token.value<<")";
 }
 
-class Interpreter
+class Lexer
 {
     string text;
     int pos;
-    Token current_token;
     char current_char;
+
+    public:
+        Lexer()
+        {
+            this->pos = 0;
+            this->current_char = '\0';
+        }
+
+        Lexer(string text) //Constructors have to be public
+        {
+            this->text = text;
+            this->pos = 0;
+            this->current_char = text[pos];
+        }
+
+        void error()
+        {
+            cout<<"ERROR:: Error parsing the input\n";
+            _Exit(10);
+        }
+
+        void advance()
+        {
+            pos++;
+            if(pos > text.size()-1)
+                current_char = '\0';
+            else
+                current_char = text[pos];
+        }
+
+        void skip_whitspace()
+        {
+            while(current_char != '\0' && current_char == ' ')
+                advance();
+        }
+
+        string integer_val()
+        {
+            string result = "";
+            while(current_char != '\0' && current_char >= 48 && current_char <= 57)
+            {
+                result += current_char;
+                advance();
+            }
+            return result;
+        }
+
+    /* ******LEXICAL ANALYSER****** */
+        Token get_next_token()
+        {
+            while(current_char == ' ')
+                skip_whitspace();
+
+            if(current_char == '\0')
+                return Token(EOL, "\0");
+
+
+            string current_char_str;
+            current_char_str = current_char;
+
+            //Means we have a digit
+            if(current_char >= 48 && current_char <= 57)
+            {
+                Token token(INTEGER, integer_val());
+                return token;
+            }
+
+            if(current_char == '+')
+            {
+                Token token(PLUS, current_char_str);
+                advance();
+                return token;
+            }
+
+            if(current_char == '-')
+            {
+                Token token(MINUS, current_char_str);
+                advance();
+                return token;
+            }
+
+            //If it isnt a digit or + or -, then some other char, hence show error
+            error();
+        }
+};
+
+class Interpreter
+{
+    Lexer lexer;
+    Token current_token;
 
     void error()
     {
-        cout<<"ERROR:: Error parsing the input\n";
+        cout<<"ERROR:: Invalid Syntax\n";
         _Exit(10);
-    }
-
-    void advance()
-    {
-        pos++;
-        if(pos > text.size()-1)
-            current_char = '\0';
-        else
-            current_char = text[pos];
-    }
-
-    void skip_whitspace()
-    {
-        while(current_char != '\0' && current_char == ' ')
-            advance();
-    }
-
-    string integer_val()
-    {
-        string result = "";
-        while(current_char != '\0' && current_char >= 48 && current_char <= 57)
-        {
-            result += current_char;
-            advance();
-        }
-        return result;
-    }
-
-/* ******LEXICAL ANALYSER****** */
-    Token get_next_token()
-    {
-        while(current_char == ' ')
-            skip_whitspace();
-
-        if(current_char == '\0')
-            return Token(EOL, "\0");
-
-
-        string current_char_str;
-        current_char_str = current_char;
-
-        //Means we have a digit
-        if(current_char >= 48 && current_char <= 57)
-        {
-            Token token(INTEGER, integer_val());
-            return token;
-        }
-
-        if(current_char == '+')
-        {
-            Token token(PLUS, current_char_str);
-            advance();
-            return token;
-        }
-
-        if(current_char == '-')
-        {
-            Token token(MINUS, current_char_str);
-            advance();
-            return token;
-        }
-
-        //If it isnt a digit or + or -, then some other char, hence show error
-        error();
     }
 
     void eat(string type)
     {
         if(current_token.type == type)
-            current_token = get_next_token();
+            current_token = this->lexer.get_next_token();
         else
             error();
     }
@@ -121,17 +146,14 @@ class Interpreter
     }
 
     public:
-        Interpreter(string text) //Constructors have to be public
+        Interpreter(Lexer lexer)
         {
-            this->text = text;
-            this->pos = 0;
-            this->current_char = text[pos];
+            this->lexer = lexer;
+            this->current_token = this->lexer.get_next_token();
         }
 
         int eval()
         {
-            current_token = get_next_token();
-
             int result;
 
             result = stoi(term());
@@ -170,7 +192,8 @@ int main()
             break;
 
         //call interpreter
-        Interpreter interpreter(text);
+        Lexer lexer(text);
+        Interpreter interpreter(lexer);
         cout<<(interpreter.eval())<<"\n";
     }
 }
