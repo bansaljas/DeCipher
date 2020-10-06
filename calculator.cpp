@@ -1,7 +1,7 @@
 #include<bits/stdc++.h>
 using namespace std;
 
-string INTEGER = "INTEGER", PLUS = "PLUS", MINUS = "MINUS", EOL = "EOL";
+string INTEGER = "INTEGER", PLUS = "PLUS", MINUS = "MINUS",MUL = "MUL", DIV = "DIV", EOL = "EOL";
 
 class Token
 {
@@ -114,6 +114,20 @@ class Lexer
                 return token;
             }
 
+            if(current_char == '*')
+            {
+                Token token(MUL, current_char_str);
+                advance();
+                return token;
+            }
+
+            if(current_char == '/')
+            {
+                Token token(DIV, current_char_str);
+                advance();
+                return token;
+            }
+
             //If it isnt a digit or + or -, then some other char, hence show error
             error();
         }
@@ -138,11 +152,36 @@ class Interpreter
             error();
     }
 
-    string term()
+    string factor()
     {
+        //factor: INTEGER
         Token token = current_token;
         eat(INTEGER);
         return token.value;
+    }
+
+    int term()
+    {
+        //term: factor ((MUL | DIV) factor)*
+        int result;
+
+        result = stoi(factor());
+
+        while(current_token.type == MUL || current_token.type == DIV)
+        {
+            if(current_token.type == MUL)
+            {
+                eat(MUL);
+                result *= stoi(factor());
+            }
+            else
+            {
+                eat(DIV);
+                result /= stoi(factor());
+            }
+        }
+
+        return result;
     }
 
     public:
@@ -152,23 +191,23 @@ class Interpreter
             this->current_token = this->lexer.get_next_token();
         }
 
-        int eval()
+        int expr()
         {
             int result;
 
-            result = stoi(term());
+            result = term();
 
             while(current_token.type != EOL)
             {
                 if(current_token.type == PLUS)
                 {
                     eat(PLUS);
-                    result += stoi(term());
+                    result += term();
                 }
                 else
                 {
                     eat(MINUS);
-                    result -= stoi(term());
+                    result -= term();
                 }
             }
 
@@ -194,6 +233,6 @@ int main()
         //call interpreter
         Lexer lexer(text);
         Interpreter interpreter(lexer);
-        cout<<(interpreter.eval())<<"\n";
+        cout<<(interpreter.expr())<<"\n";
     }
 }
