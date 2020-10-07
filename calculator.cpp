@@ -1,7 +1,7 @@
 #include<bits/stdc++.h>
 using namespace std;
 
-string INTEGER = "INTEGER", PLUS = "PLUS", MINUS = "MINUS",MUL = "MUL", DIV = "DIV", EOL = "EOL";
+string INTEGER = "INTEGER", PLUS = "PLUS", MINUS = "MINUS",MUL = "MUL", DIV = "DIV", EOL = "EOL", LPAREN = "(", RPAREN = ")";
 
 class Token
 {
@@ -127,6 +127,20 @@ class Lexer
                 advance();
                 return token;
             }
+            
+            if(current_char == '(')
+            {
+                Token token(LPAREN, current_char_str);
+                advance();
+                return token;
+            }
+
+            if(current_char == ')')
+            {
+                Token token(RPAREN, current_char_str);
+                advance();
+                return token;
+            }
 
             //If it isnt a digit or + or -, then some other char, hence show error
             error();
@@ -156,8 +170,19 @@ class Interpreter
     {
         //factor: INTEGER
         Token token = current_token;
-        eat(INTEGER);
-        return token.value;
+        if(token.type == INTEGER)
+        {
+            eat(INTEGER);
+            return token.value;
+        }
+
+        else if(token.type == LPAREN){
+            eat(LPAREN);
+            int result = expr();
+            eat(RPAREN);
+            return to_string(result);
+        }
+        
     }
 
     int term()
@@ -197,7 +222,7 @@ class Interpreter
 
             result = term();
 
-            while(current_token.type != EOL)
+            while(current_token.type == PLUS || current_token.type == MINUS)
             {
                 if(current_token.type == PLUS)
                 {
