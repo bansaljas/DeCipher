@@ -157,79 +157,80 @@ class Lexer
 class Interpreter
 {
     Lexer lexer;
-    Token current_token;
+    public: Token current_token;
 
-    void error()
-    {
-        cout<<"ERROR:: Invalid Syntax\n";
-        _Exit(10);
-    }
-
-    void eat(string type)
-    {
-        if(current_token.type == type)
-            current_token = this->lexer.get_next_token();
-        else
-            error();
-    }
-
-    int atom()
-    {
-        //atom: INTEGER | LPAREN expr RPAREN
-        Token token = current_token;
-        if(token.type == INTEGER)
+    private:
+        void error()
         {
-            eat(INTEGER);
-            return stoi(token.value);
+            cout<<"ERROR:: Invalid Syntax\n";
+            _Exit(10);
         }
 
-        else if(token.type == LPAREN){
-            eat(LPAREN);
-            int result = expr();
-            eat(RPAREN);
+        void eat(string type)
+        {
+            if(current_token.type == type)
+                current_token = this->lexer.get_next_token();
+            else
+                error();
+        }
+
+        int atom()
+        {
+            //atom: INTEGER | LPAREN expr RPAREN
+            Token token = current_token;
+            if(token.type == INTEGER)
+            {
+                eat(INTEGER);
+                return stoi(token.value);
+            }
+
+            else if(token.type == LPAREN){
+                eat(LPAREN);
+                int result = expr();
+                eat(RPAREN);
+                return result;
+            }
+
+        }
+
+        int factor()
+        {
+            //factor: atom (POW factor)*
+            int result;
+            result = atom();
+
+            while(current_token.type == POW)
+            {
+                eat(POW);
+                result = int(pow(result, factor()) + 0.5);
+            }
+
             return result;
         }
 
-    }
-
-    int factor()
-    {
-        //factor: atom (POW factor)*
-        int result;
-        result = atom();
-
-        while(current_token.type == POW)
+        int term()
         {
-            eat(POW);
-            result = int(pow(result, factor()) + 0.5);
-        }
+            //term: factor ((MUL | DIV) factor)*
+            int result;
 
-        return result;
-    }
+            result = factor();
 
-    int term()
-    {
-        //term: factor ((MUL | DIV) factor)*
-        int result;
-
-        result = factor();
-
-        while(current_token.type == MUL || current_token.type == DIV)
-        {
-            if(current_token.type == MUL)
+            while(current_token.type == MUL || current_token.type == DIV)
             {
-                eat(MUL);
-                result *= factor();
+                if(current_token.type == MUL)
+                {
+                    eat(MUL);
+                    result *= factor();
+                }
+                else
+                {
+                    eat(DIV);
+                    result /= factor();
+                }
             }
-            else
-            {
-                eat(DIV);
-                result /= factor();
-            }
-        }
 
-        return result;
-    }
+            return result;
+        }
 
     public:
         Interpreter(Lexer lexer)
@@ -280,6 +281,13 @@ int main()
         //call interpreter
         Lexer lexer(text);
         Interpreter interpreter(lexer);
-        cout<<(interpreter.expr())<<"\n";
+        int result = interpreter.expr();
+        if(interpreter.current_token.type != EOL)
+        {
+            cout<<"ERROR:: Invalid Syntax";
+            break;
+        }
+        else
+            cout<<result<<"\n";
     }
 }
