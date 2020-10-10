@@ -1,7 +1,7 @@
 #include<bits/stdc++.h>
 using namespace std;
 
-string INTEGER = "INTEGER", PLUS = "PLUS", MINUS = "MINUS",MUL = "MUL", DIV = "DIV", EOL = "EOL", LPAREN = "(", RPAREN = ")";
+string INTEGER = "INTEGER", PLUS = "PLUS", MINUS = "MINUS", MUL = "MUL", DIV = "DIV", EOL = "EOL", LPAREN = "(", RPAREN = ")", POW = "POW";
 
 class Token
 {
@@ -41,7 +41,7 @@ class Lexer
             this->current_char = '\0';
         }
 
-        Lexer(string text) //Constructors have to be public
+        Lexer(string text)
         {
             this->text = text;
             this->pos = 0;
@@ -127,7 +127,7 @@ class Lexer
                 advance();
                 return token;
             }
-            
+
             if(current_char == '(')
             {
                 Token token(LPAREN, current_char_str);
@@ -138,6 +138,13 @@ class Lexer
             if(current_char == ')')
             {
                 Token token(RPAREN, current_char_str);
+                advance();
+                return token;
+            }
+
+            if(current_char == '^')
+            {
+                Token token(POW, current_char_str);
                 advance();
                 return token;
             }
@@ -166,23 +173,38 @@ class Interpreter
             error();
     }
 
-    string factor()
+    int atom()
     {
-        //factor: INTEGER
+        //atom: INTEGER | LPAREN expr RPAREN
         Token token = current_token;
         if(token.type == INTEGER)
         {
             eat(INTEGER);
-            return token.value;
+            return stoi(token.value);
         }
 
         else if(token.type == LPAREN){
             eat(LPAREN);
             int result = expr();
             eat(RPAREN);
-            return to_string(result);
+            return result;
         }
-        
+
+    }
+
+    int factor()
+    {
+        //factor: atom (POW factor)*
+        int result;
+        result = atom();
+
+        while(current_token.type == POW)
+        {
+            eat(POW);
+            result = int(pow(result, factor()) + 0.5);
+        }
+
+        return result;
     }
 
     int term()
@@ -190,19 +212,19 @@ class Interpreter
         //term: factor ((MUL | DIV) factor)*
         int result;
 
-        result = stoi(factor());
+        result = factor();
 
         while(current_token.type == MUL || current_token.type == DIV)
         {
             if(current_token.type == MUL)
             {
                 eat(MUL);
-                result *= stoi(factor());
+                result *= factor();
             }
             else
             {
                 eat(DIV);
-                result /= stoi(factor());
+                result /= factor();
             }
         }
 
