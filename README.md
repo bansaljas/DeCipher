@@ -101,7 +101,7 @@ Following is a document, entailing all the work we have done till now, the vario
 
 ## How to Run:
 
-- Compile the cpp code file named **calculater.cpp** (Ignore the warnings, if any).
+- Compile the cpp code file named **calculator.cpp** (Ignore the warnings, if any).
 - Now run the executable file (a.exe).
 - Now, **calc>** would appear, where you can give any arithmetic expression to be evaluated. For example: **(4+1) ^ 2 - 3*2**
 - If you wish to exit the interpreter, type **quit** and the code will stop executing.
