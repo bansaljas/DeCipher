@@ -5,8 +5,9 @@
 using namespace std;
 
 class BinOp;
+class UnaryOp;
 class Num;
-#define boostvar boost::variant<BinOp*, Num*>
+#define boostvar boost::variant<BinOp*, Num*, UnaryOp*>
 
 /* ###############################
    #        LEXER                #
@@ -191,6 +192,22 @@ public:
     }
 };
 
+class UnaryOp : public AST
+{
+
+public:
+    Token token, op;
+    boostvar expr;
+
+    UnaryOp(Token op, boostvar expr)
+    {
+        this->token = op;
+        this->op = op;
+        this->expr = expr;
+    }
+};
+
+
 class Num : public AST
 {
 
@@ -209,7 +226,7 @@ class Parser
 {
     Lexer lexer;
     Token current_token;
-      
+
 private:
     void error()
     {
@@ -227,9 +244,19 @@ private:
 
     boostvar atom()
     {
-        //atom: INTEGER | LPAREN expr RPAREN
+        //atom: (PLUS | MINUS) atom | INTEGER | LPAREN expr RPAREN
         Token token = current_token;
-        if (token.type == INTEGER)
+        if (token.type == PLUS)
+        {
+            eat(PLUS);
+            return new UnaryOp(token,atom());
+        }
+        else if (token.type == MINUS)
+        {
+            eat(MINUS);
+            return new UnaryOp(token, atom());
+        }
+        else if (token.type == INTEGER)
         {
             eat(INTEGER);
             return new Num(token);
@@ -261,7 +288,7 @@ private:
     boostvar term()
     {
         //term: factor ((MUL | DIV) factor)*
-        
+
         boostvar node = factor();
 
         while (current_token.type == MUL || current_token.type == DIV)
@@ -319,7 +346,7 @@ public:
 */
 
 
-class Interpreter 
+class Interpreter
 {
     Parser parser;
 
@@ -341,6 +368,8 @@ public:
             return visit_BinOp(boost::get<BinOp*>(node));
         else if (node.which() == 1)
             return visit_Num(boost::get<Num*>(node));
+        else if (node.which() == 2)
+            return visit_UnaryOp(boost::get<UnaryOp*>(node));
         else
             error();
     }
@@ -357,6 +386,19 @@ public:
             return visit(node->left) / visit(node->right);
         else if (node->op.type == POW)
             return int(pow(visit(node->left), visit(node->right)) + 0.5);
+    }
+    
+
+    int visit_UnaryOp(UnaryOp* node)
+    {
+        if (node->op.type == PLUS)
+        {
+            return +visit(node->expr);
+        }
+        else if (node->op.type == MINUS)
+        {
+            return -visit(node->expr);
+        }
     }
 
     int visit_Num(Num* node)
@@ -397,6 +439,6 @@ int main()
         //    break;
         //}
         //else
-            cout << result << "\n";
+        cout << result << "\n";
     }
 }
