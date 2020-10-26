@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <fstream>
 #include <algorithm>
 #include <unordered_map>
 #include <boost/variant.hpp>
@@ -14,6 +15,8 @@ class Var;
 class NoOp;
 
 #define boostvar boost::variant<BinOp*, Num*, UnaryOp*, Compound*, Assign*, Var*, NoOp*>
+
+unordered_map<string, int> GLOBAL_SCOPE;
 
 /* ###############################
    #        LEXER                #
@@ -93,7 +96,7 @@ public:
             advance();
         }
 
-        if (RESERVED_KEYWORDS.find(result) != RESERVED_KEYWORDS.end())
+        if (RESERVED_KEYWORDS.find(result) == RESERVED_KEYWORDS.end())
             return RESERVED_KEYWORDS[result] = Token(ID, result);
         else
             return RESERVED_KEYWORDS[result];
@@ -354,7 +357,7 @@ private:
 
     boostvar atom()
     {
-        //atom: (PLUS | MINUS) atom | INTEGER | LPAREN expr RPAREN
+        //atom: (PLUS | MINUS) atom | INTEGER | LPAREN expr RPAREN | variable
         Token token = current_token;
         if (token.type == PLUS)
         {
@@ -375,6 +378,11 @@ private:
             eat(LPAREN);
             boostvar node = expr();
             eat(RPAREN);
+            return node;
+        }
+        else if (token.type == ID)
+        {
+            boostvar node = variable();
             return node;
         }
         error();
@@ -441,19 +449,19 @@ private:
 
     boostvar variable(){
         //variable: ID
-        boostvar node = Var(current_token);
+        boostvar node = new Var(current_token);
         eat(ID);
         return node;
     }
 
     boostvar assignment_statement()
-    {   
+    {
         //assignment_statement: variable ASSIGN expr
         boostvar left = variable();
         Token token = current_token;
         eat(ASSIGN);
         boostvar right = expr();
-        boostvar node = Assign(left, token, right);
+        boostvar node = new Assign(left, token, right);
         return node;
     }
 
@@ -488,12 +496,9 @@ private:
         }
 
         if (current_token.type == ID)
-        {
             error();
-        }
 
         return results;
-
     }
 
     boostvar compound_statement()
@@ -503,14 +508,14 @@ private:
         vector<boostvar> nodes = statement_list();
         eat(END);
 
-        Compound* root;
+        Compound* root = new Compound();
         for (auto node : nodes)
             root->children.push_back(node);
         return root;
     }
 
     boostvar program()
-    {   
+    {
         //program : compound_statement DOT
         boostvar node = compound_statement();
         eat(DOT);
@@ -530,7 +535,10 @@ public:
 
     boostvar parse()
     {
-        return expr();
+        boostvar node = program();
+        if (current_token.type != EOL)
+            error();
+        return node;
     }
 };
 
@@ -565,6 +573,14 @@ public:
             return visit_Num(boost::get<Num*>(node));
         else if (node.which() == 2)
             return visit_UnaryOp(boost::get<UnaryOp*>(node));
+        else if (node.which() == 3)
+            return visit_Compound(boost::get<Compound*>(node));
+        else if (node.which() == 4)
+            return visit_Assign(boost::get<Assign*>(node));
+        else if (node.which() == 5)
+            return visit_Var(boost::get<Var*>(node));
+        else if (node.which() == 6)
+            return visit_NoOp(boost::get<NoOp*>(node));
         else
             error();
     }
@@ -600,6 +616,36 @@ public:
         }
     }
 
+    int visit_Compound(Compound* node)
+    {
+        for (auto child : node->children)
+            visit(child);
+        return 0;
+    }
+
+    int visit_NoOp(NoOp* node)
+    {
+        return 0;
+    }
+
+    int visit_Assign(Assign* node)
+    {
+        string var_name = boost::get<Var*>(node->left)->value;
+        GLOBAL_SCOPE[var_name] = visit(node->right);
+        return GLOBAL_SCOPE[var_name];
+    }
+
+    int visit_Var(Var* node)
+    {
+        string var_name = node->value;
+        if (GLOBAL_SCOPE.find(var_name) == GLOBAL_SCOPE.end())
+        {
+            cout << "ERROR:: Variable not defined.\n";
+            _Exit(10);
+        }
+        return GLOBAL_SCOPE[var_name];
+    }
+
     int interpret()
     {
         boostvar tree = parser.parse();
@@ -610,29 +656,21 @@ public:
 int main()
 {
     string text;
-    while (true)
-    {
-        cout << "calc> ";
-        getline(cin, text);
-        if (text.size() == 0)
-            continue; //meaning that sometimes we tend to press enter but we still want to give input
+    string line;
+    ifstream MyReadfile("sample.txt");
+    while (getline(MyReadfile, line))
+        text = text + line + " ";
+    text = text.substr(0, text.size() - 1);
 
-        string temp = text;
-        transform(temp.begin(), temp.end(), temp.begin(), ::tolower); //to check all possible permutations of QUIT
-        if (temp == "quit")
-            break;
+    string temp = text;
 
-        //call interpreter
-        Lexer lexer(text);
-        Parser parser(lexer);
-        Interpreter interpreter(parser);
-        int result = interpreter.interpret();
-        //if (parser.current_token.type != EOL)
-        //{
-        //    cout << "ERROR:: Invalid Syntax";
-        //    break;
-        //}
-        //else
-        cout << result << "\n";
-    }
+    cout << text;
+
+
+    Lexer lexer(text);
+    Parser parser(lexer);
+    Interpreter interpreter(parser);
+    int result = interpreter.interpret();
+    for (auto i : GLOBAL_SCOPE)
+        cout << i.first << " : " << i.second<<"\n";
 }
