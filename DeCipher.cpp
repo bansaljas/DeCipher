@@ -13,8 +13,12 @@ class Compound;
 class Assign;
 class Var;
 class NoOp;
+class Program;
+class Block;
+class VarDecl;
+class Type;
 
-#define boostvar boost::variant<BinOp*, Num*, UnaryOp*, Compound*, Assign*, Var*, NoOp*>
+#define boostvar boost::variant<BinOp*, Num*, UnaryOp*, Compound*, Assign*, Var*, NoOp*, Program*, Block*, VarDecl*, Type*>
 
 unordered_map<string, int> GLOBAL_SCOPE;
 
@@ -23,7 +27,10 @@ unordered_map<string, int> GLOBAL_SCOPE;
    ###############################
 */
 
-string INTEGER = "INTEGER", PLUS = "PLUS", MINUS = "MINUS", MUL = "MUL", DIV = "DIV", EOL = "EOL", LPAREN = "(", RPAREN = ")", POW = "POW", BEGIN = "BEGIN", END = "END", DOT = "DOT", ID = "ID", ASSIGN = "ASSIGN", SEMI = "SEMI";
+string INTEGER = "INTEGER", PLUS = "PLUS", MINUS = "MINUS", MUL = "MUL", DIV = "DIV", EOL = "EOL", LPAREN = "(", RPAREN = ")", POW = "POW", BEGIN = "BEGIN", END = "END", DOT = "DOT",
+ID = "ID", ASSIGN = "ASSIGN", SEMI = "SEMI", PROGRAM = "PROGRAM", VAR = "VAR", COLON = "COLON",
+COMMA = "COMMA", REAL = "REAL", INTEGER_CONST = "INTEGER_CONST", REAL_CONST = "REAL_CONST",
+INTEGER_DIV = "INTEGER_DIV", FLOAT_DIV = "FLOAT_DIV";
 
 class Token
 {
@@ -77,6 +84,11 @@ public:
 
     void add_keywords()
     {
+        RESERVED_KEYWORDS[PROGRAM] = Token("PROGRAM", PROGRAM);
+        RESERVED_KEYWORDS[VAR] = Token("VAR", VAR);
+        RESERVED_KEYWORDS[DIV] = Token("INTEGER_DIV", DIV);
+        RESERVED_KEYWORDS[INTEGER] = Token("INTEGER", INTEGER);
+        RESERVED_KEYWORDS[REAL] = Token("REAL", REAL);
         RESERVED_KEYWORDS[BEGIN] = Token("BEGIN", BEGIN);
         RESERVED_KEYWORDS[END] = Token("END", END);
     }
@@ -126,15 +138,40 @@ public:
             advance();
     }
 
-    string integer_val()
+    void skip_comment()
     {
-        string result = "";
-        while (current_char != '\0' && current_char >= 48 && current_char <= 57)
-        {
-            result += current_char;
+        while (current_char != '}')
             advance();
-        }
-        return result;
+        advance(); //for the closing bracket
+    }
+
+    Token number()
+    {
+        Token token;
+         string result = "";
+         while (current_char != '\0' && current_char >= 48 && current_char <= 57)
+         {
+             result += current_char;
+             advance();
+         }
+
+         if (current_char == '.')
+         {
+             result += current_char;
+             advance();
+
+             while (current_char != '\0' && current_char >= 48 && current_char <= 57)
+             {
+                 result += current_char;
+                 advance();
+             }
+
+             token = Token("REAL_CONST", result);
+         }
+         else
+             token = Token("INTEGER_CONST", result);
+
+         return token;
     }
 
     /* ******LEXICAL ANALYSER****** */
@@ -150,11 +187,17 @@ public:
         string current_char_str;
         current_char_str = current_char;
 
+        if (current_char == '{')
+        {
+            advance();
+            skip_comment();
+            get_next_token();
+        }
+        
         //Means we have a digit
         if (current_char >= 48 && current_char <= 57)
         {
-            Token token(INTEGER, integer_val());
-            return token;
+            return number();
         }
 
         if (current_char == '+')
@@ -233,6 +276,27 @@ public:
             return token;
         }
 
+        if (current_char == ':')
+        {
+            Token token(COLON, ":");
+            advance();
+            return token;
+        }
+
+        if (current_char == ',')
+        {
+            Token token(COMMA, ",");
+            advance();
+            return token;
+        }
+
+        if (current_char == '/')
+        {
+            Token token(FLOAT_DIV, "/");
+            advance();
+            return token;
+        }
+
         //If it isnt a digit or + or -, then some other char, hence show error
         error();
     }
@@ -246,6 +310,65 @@ public:
 
 class AST
 {};
+
+class Program : public AST
+{
+
+public:
+    string name;
+    boostvar block;
+
+    Program(string name, boostvar block)
+    {
+        this->name = name;
+        this->block = block;
+    }
+};
+
+class Block : public AST
+{
+
+public:
+    vector<boostvar> declarations;
+    boostvar compound_statement;
+
+    Block(vector<boostvar> declarations, boostvar compound_statement)
+    {
+        this->declarations = declarations;
+        this->compound_statement = compound_statement;
+    }
+};
+
+
+
+class VarDecl : public AST
+{
+
+public:
+    boostvar var_node;
+    boostvar type_node;
+
+    VarDecl(boostvar var_node, boostvar type_node)
+    {
+        this->var_node = var_node;
+        this->type_node = type_node;
+    }
+};
+
+
+class Type : public AST
+{
+
+public:
+    Token token;
+    string value;
+
+    Type(Token token)
+    {
+        this->token = token;
+        this->value = token.value;
+    }
+};
 
 class Compound : public AST
 {
@@ -357,7 +480,7 @@ private:
 
     boostvar atom()
     {
-        //atom: (PLUS | MINUS) atom | INTEGER | LPAREN expr RPAREN | variable
+        //atom: (PLUS | MINUS) atom | INTEGER | LPAREN expr RPAREN | variable 
         Token token = current_token;
         if (token.type == PLUS)
         {
@@ -455,7 +578,7 @@ private:
     }
 
     boostvar assignment_statement()
-    {
+    {   
         //assignment_statement: variable ASSIGN expr
         boostvar left = variable();
         Token token = current_token;
@@ -513,16 +636,88 @@ private:
             root->children.push_back(node);
         return root;
     }
-
-    boostvar program()
+    
+    boostvar type_spec()
     {
-        //program : compound_statement DOT
-        boostvar node = compound_statement();
-        eat(DOT);
+        //type_spec : INTEGER | REAL
+        Token token = current_token;
+        if (current_token.type == INTEGER)
+            eat(INTEGER);
+        else
+            eat(REAL);
+        
+        boostvar node = new Type(token);
         return node;
     }
 
+    vector<boostvar> variable_declarations()
+    {
+        //variable_declaration : ID (COMMA ID)* COLON type_spec
+        vector<boostvar> var_nodes;
 
+        //storing the first ID
+        var_nodes.push_back(new Var(current_token));
+        eat(ID);
+
+        while (current_token.type == COMMA)
+        {
+            eat(COMMA);
+            var_nodes.push_back(new Var(current_token));
+            eat(ID);
+        }
+
+        eat(COLON);
+
+        boostvar type_node = type_spec();
+        vector<boostvar> var_declarations;
+
+        for (auto var_node : var_nodes)
+            var_declarations.push_back(new VarDecl(var_node, type_node));
+
+        return var_declarations;
+    }
+
+    vector<boostvar> declarations()
+    {
+        //declarations: VAR(variable_declaration SEMI) + | empty
+        vector<boostvar> declarations;
+        if (current_token.type == VAR)
+        {
+            eat(VAR);
+            while (current_token.type == ID)
+            {
+                vector<boostvar> var_decls = variable_declarations();
+                for (auto var_decl : var_decls)
+                    declarations.push_back(var_decl);
+                eat(SEMI);
+            }
+        }
+        if (declarations.size() == 0)
+            error();
+        return declarations;
+    }
+
+    boostvar block()
+    {
+        //block : declarations compound_statement
+        vector<boostvar> declaration_nodes = declarations();
+        boostvar compound_statement_node = compound_statement();
+        boostvar node = new Block(declaration_nodes, compound_statement_node);
+        return node;
+    }
+
+    boostvar program()
+    {   
+        //program : PROGRAM variable SEMI block DOT
+        eat(PROGRAM);
+        Var* var_node = boost::get<Var*>(variable());
+        string program_name = var_node->value;
+        eat(SEMI);
+        boostvar block_node = block();
+        boostvar program_node = new Program(program_name, block_node);
+        eat(DOT);
+        return program_node;
+    }
 
 public:
     Parser() {}
@@ -601,6 +796,7 @@ public:
 
     int visit_Num(Num* node)
     {
+        //type check here
         return stoi(node->value);
     }
 
@@ -661,12 +857,12 @@ int main()
     while (getline(MyReadfile, line))
         text = text + line + " ";
     text = text.substr(0, text.size() - 1);
-
+        
     string temp = text;
-
+        
     cout << text;
 
-
+       
     Lexer lexer(text);
     Parser parser(lexer);
     Interpreter interpreter(parser);
