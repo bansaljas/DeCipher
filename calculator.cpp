@@ -1,12 +1,18 @@
 #include <iostream>
 #include <string>
 #include <algorithm>
+#include <unordered_map>
 #include <boost/variant.hpp>
 using namespace std;
 
 class BinOp;
-class UnaryOp;
 class Num;
+class UnaryOp;
+class Compound;
+class Assign;
+class Var;
+class NoOp;
+
 #define boostvar boost::variant<BinOp*, Num*, UnaryOp*>
 
 /* ###############################
@@ -14,7 +20,7 @@ class Num;
    ###############################
 */
 
-string INTEGER = "INTEGER", PLUS = "PLUS", MINUS = "MINUS", MUL = "MUL", DIV = "DIV", EOL = "EOL", LPAREN = "(", RPAREN = ")", POW = "POW";
+string INTEGER = "INTEGER", PLUS = "PLUS", MINUS = "MINUS", MUL = "MUL", DIV = "DIV", EOL = "EOL", LPAREN = "(", RPAREN = ")", POW = "POW", BEGIN = "BEGIN", END = "END", DOT = "DOT", ID = "ID", ASSIGN = "ASSIGN", SEMI = "SEMI";
 
 class Token
 {
@@ -34,12 +40,16 @@ public:
         this->value = value;
         this->type = type;
     }
+
 };
 
 //To print the token in the correct format
 ostream& operator<<(ostream& strm, const Token& token) {
     return strm << "(" << token.type << ", " << token.value << ")";
 }
+
+unordered_map<string, class Token> RESERVED_KEYWORDS;
+
 
 class Lexer
 {
@@ -59,12 +69,43 @@ public:
         this->text = text;
         this->pos = 0;
         this->current_char = text[pos];
+        add_keywords();
+    }
+
+    void add_keywords()
+    {
+        RESERVED_KEYWORDS[BEGIN] = Token("BEGIN", BEGIN);
+        RESERVED_KEYWORDS[END] = Token("END", END);
     }
 
     void error()
     {
         cout << "ERROR:: Error parsing the input\n";
         _Exit(10);
+    }
+
+    Token id()
+    {
+        string result;
+        while (current_char != '\0' && isalnum(current_char))
+        {
+            result += current_char;
+            advance();
+        }
+
+        if (RESERVED_KEYWORDS.find(result) != RESERVED_KEYWORDS.end())
+            return RESERVED_KEYWORDS[result] = Token(ID, result);
+        else
+            return RESERVED_KEYWORDS[result];
+    }
+
+    char peek()
+    {
+        int peek_pos = pos + 1;
+        if (peek_pos > text.size() - 1)
+            return '\0';
+        else
+            return text[peek_pos];
     }
 
     void advance()
@@ -162,6 +203,33 @@ public:
             return token;
         }
 
+        if (isalpha(current_char))
+        {
+            return id();
+        }
+
+        if (current_char == ':' && peek() == '=')
+        {
+            Token token(ASSIGN, ":=");
+            advance();
+            advance();
+            return token;
+        }
+
+        if (current_char == ';')
+        {
+            Token token(SEMI, ";");
+            advance();
+            return token;
+        }
+
+        if (current_char == '.')
+        {
+            Token token(DOT, ".");
+            advance();
+            return token;
+        }
+
         //If it isnt a digit or + or -, then some other char, hence show error
         error();
     }
@@ -176,6 +244,49 @@ public:
 class AST
 {};
 
+class Compound : public AST
+{
+
+public:
+    vector<boostvar> children;
+};
+
+class Assign : public AST
+{
+
+public:
+    Var* left;
+    Token token, op;
+    boostvar right;
+
+    Assign(Var* left, Token op, boostvar right)
+    {
+        this->left = left;
+        this->token = op;
+        this->op = op;
+        this->right = right;
+    }
+};
+
+class Var : public AST
+{
+
+public:
+    Token token;
+    string value;
+
+    Var(Token token)
+    {
+        this->token = token;
+        this->value = token.value;
+    }
+};
+
+class NoOp : public AST
+{
+
+};
+
 class BinOp : public AST
 {
 
@@ -189,6 +300,20 @@ public:
         this->token = op;
         this->op = op;
         this->right = right;
+    }
+};
+
+class Num : public AST
+{
+
+public:
+    Token token;
+    string value;
+
+    Num(Token token)
+    {
+        this->token = token;
+        this->value = token.value;
     }
 };
 
@@ -207,26 +332,11 @@ public:
     }
 };
 
-
-class Num : public AST
-{
-
-public:
-    Token token;
-    string value;
-
-    Num(Token token)
-    {
-        this->token = token;
-        this->value = token.value;
-    }
-};
-
 class Parser
 {
     Lexer lexer;
     Token current_token;
-
+      
 private:
     void error()
     {
@@ -249,7 +359,7 @@ private:
         if (token.type == PLUS)
         {
             eat(PLUS);
-            return new UnaryOp(token,atom());
+            return new UnaryOp(token, atom());
         }
         else if (token.type == MINUS)
         {
@@ -288,7 +398,7 @@ private:
     boostvar term()
     {
         //term: factor ((MUL | DIV) factor)*
-
+        
         boostvar node = factor();
 
         while (current_token.type == MUL || current_token.type == DIV)
@@ -324,6 +434,25 @@ private:
         return node;
     }
 
+    boostvar program()
+    {
+        boostvar node = compound_statement();
+        eat(DOT);
+        return node;
+    }
+
+    Compound* compound_statement()
+    {
+        eat(BEGIN);
+        vector<boostvar> nodes = statement_list();
+        eat(END);
+
+        Compound* root;
+        for (auto node : nodes)
+            root->children.push_back(node);
+        return root;
+    }
+
 public:
     Parser() {}
 
@@ -346,7 +475,7 @@ public:
 */
 
 
-class Interpreter
+class Interpreter 
 {
     Parser parser;
 
@@ -387,7 +516,11 @@ public:
         else if (node->op.type == POW)
             return int(pow(visit(node->left), visit(node->right)) + 0.5);
     }
-    
+
+    int visit_Num(Num* node)
+    {
+        return stoi(node->value);
+    }
 
     int visit_UnaryOp(UnaryOp* node)
     {
@@ -399,11 +532,6 @@ public:
         {
             return -visit(node->expr);
         }
-    }
-
-    int visit_Num(Num* node)
-    {
-        return stoi(node->value);
     }
 
     int interpret()
