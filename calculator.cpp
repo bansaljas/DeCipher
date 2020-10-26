@@ -13,7 +13,7 @@ class Assign;
 class Var;
 class NoOp;
 
-#define boostvar boost::variant<BinOp*, Num*, UnaryOp*>
+#define boostvar boost::variant<BinOp*, Num*, UnaryOp*, Compound*, Assign*, Var*, NoOp*>
 
 /* ###############################
    #        LEXER                #
@@ -255,11 +255,11 @@ class Assign : public AST
 {
 
 public:
-    Var* left;
+    boostvar left;
     Token token, op;
     boostvar right;
 
-    Assign(Var* left, Token op, boostvar right)
+    Assign(boostvar left, Token op, boostvar right)
     {
         this->left = left;
         this->token = op;
@@ -336,7 +336,7 @@ class Parser
 {
     Lexer lexer;
     Token current_token;
-      
+
 private:
     void error()
     {
@@ -398,7 +398,7 @@ private:
     boostvar term()
     {
         //term: factor ((MUL | DIV) factor)*
-        
+
         boostvar node = factor();
 
         while (current_token.type == MUL || current_token.type == DIV)
@@ -434,15 +434,71 @@ private:
         return node;
     }
 
-    boostvar program()
-    {
-        boostvar node = compound_statement();
-        eat(DOT);
+    boostvar empty() {
+        //An empty production
+        return new NoOp();
+    }
+
+    boostvar variable(){
+        //variable: ID
+        boostvar node = Var(current_token);
+        eat(ID);
         return node;
     }
 
-    Compound* compound_statement()
+    boostvar assignment_statement()
+    {   
+        //assignment_statement: variable ASSIGN expr
+        boostvar left = variable();
+        Token token = current_token;
+        eat(ASSIGN);
+        boostvar right = expr();
+        boostvar node = Assign(left, token, right);
+        return node;
+    }
+
+    boostvar statement()
     {
+        //statement: compound_statement | assignment_statement | empty
+        boostvar node;
+
+        if (current_token.type == BEGIN)
+            node = compound_statement();
+        else if (current_token.type == ID)
+            node = assignment_statement();
+        else
+            node = empty();
+
+        return node;
+    }
+
+    vector<boostvar> statement_list()
+    {
+        //statement_list: statement | statement SEMI statement_list
+
+        boostvar node = statement();
+
+        vector<boostvar> results;
+        results.push_back(node);
+
+        while (current_token.type == SEMI)
+        {
+            eat(SEMI);
+            results.push_back(statement());
+        }
+
+        if (current_token.type == ID)
+        {
+            error();
+        }
+
+        return results;
+
+    }
+
+    boostvar compound_statement()
+    {
+        //compound_statement: BEGIN statement_list END
         eat(BEGIN);
         vector<boostvar> nodes = statement_list();
         eat(END);
@@ -452,6 +508,16 @@ private:
             root->children.push_back(node);
         return root;
     }
+
+    boostvar program()
+    {   
+        //program : compound_statement DOT
+        boostvar node = compound_statement();
+        eat(DOT);
+        return node;
+    }
+
+
 
 public:
     Parser() {}
@@ -475,7 +541,7 @@ public:
 */
 
 
-class Interpreter 
+class Interpreter
 {
     Parser parser;
 
