@@ -234,7 +234,7 @@ private:
 
         boostvar node = factor();
 
-        while (current_token.type == MUL || current_token.type == DIV)
+        while (current_token.type == MUL || current_token.type == INTEGER_DIV || current_token.type == FLOAT_DIV)
         {
             Token token = current_token;
             if (current_token.type == MUL)

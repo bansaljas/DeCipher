@@ -20,7 +20,7 @@ class Type;
 
 #define boostvar boost::variant<BinOp*, Num*, UnaryOp*, Compound*, Assign*, Var*, NoOp*, Program*, Block*, VarDecl*, Type*>
 
-unordered_map<string, int> GLOBAL_SCOPE;
+unordered_map<string, float> GLOBAL_SCOPE;
 
 /* ###############################
    #        LEXER                #
@@ -177,21 +177,22 @@ public:
     /* ******LEXICAL ANALYSER****** */
     Token get_next_token()
     {
-        if (current_char == '\0')
-            return Token(EOL, "\0");
-
         while (current_char == ' ')
             skip_whitspace();
-
-        string current_char_str;
-        current_char_str = current_char;
+        
+        if (current_char == '\0')
+            return Token(EOL, "\0");
 
         if (current_char == '{')
         {
             advance();
             skip_comment();
-            get_next_token();
+            return get_next_token();
         }
+
+        string current_char_str;
+        current_char_str = current_char;
+                
 
         //Means we have a digit
         if (current_char >= 48 && current_char <= 57)
@@ -290,8 +291,6 @@ public:
         }
 
         //If it isnt a digit or + or -, then some other char, hence show error
-        cout << int(current_char) << endl;
-        cout << pos << endl;
         error();
     }
 };

@@ -51,7 +51,7 @@ public:
             error();
     }
 
-    int visit_BinOp(BinOp* node)
+    float visit_BinOp(BinOp* node)
     {
         if (node->op.type == PLUS)
             return visit(node->left) + visit(node->right);
