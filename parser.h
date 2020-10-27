@@ -177,7 +177,7 @@ private:
 
     boostvar atom()
     {
-        //atom: (PLUS | MINUS) atom | INTEGER | LPAREN expr RPAREN | variable 
+        //atom: (PLUS | MINUS) atom | INTEGER_CONST | REAL_CONST | LPAREN expr RPAREN | variable 
         Token token = current_token;
         if (token.type == PLUS)
         {
@@ -189,9 +189,14 @@ private:
             eat(MINUS);
             return new UnaryOp(token, atom());
         }
-        else if (token.type == INTEGER)
+        else if (token.type == INTEGER_CONST)
         {
-            eat(INTEGER);
+            eat(INTEGER_CONST);
+            return new Num(token);
+        }
+        else if (token.type == REAL_CONST)
+        {
+            eat(REAL_CONST);
             return new Num(token);
         }
         else if (token.type == LPAREN) {
@@ -225,7 +230,7 @@ private:
 
     boostvar term()
     {
-        //term: factor ((MUL | DIV) factor)*
+        //term: factor factor ((MUL | INTEGER_DIV | FLOAT_DIV) factor)
 
         boostvar node = factor();
 
@@ -234,8 +239,10 @@ private:
             Token token = current_token;
             if (current_token.type == MUL)
                 eat(MUL);
+            else if (current_token.type == INTEGER_DIV)
+                eat(INTEGER_DIV);
             else
-                eat(DIV);
+                eat(FLOAT_DIV);
 
             node = new BinOp(node, token, factor());
         }

@@ -1,5 +1,6 @@
 #include "parser.h"
 
+
 /* ###############################
    #       INTERPRETER           #
    ###############################
@@ -22,7 +23,7 @@ public:
         _Exit(10);
     }
 
-    int visit(boostvar node)
+    float visit(boostvar node)
     {
         if (node.which() == 0)
             return visit_BinOp(boost::get<BinOp*>(node));
@@ -38,6 +39,14 @@ public:
             return visit_Var(boost::get<Var*>(node));
         else if (node.which() == 6)
             return visit_NoOp(boost::get<NoOp*>(node));
+        else if (node.which() == 7)
+            return visit_Program(boost::get<Program*>(node));
+        else if(node.which() == 8)
+            return visit_Block(boost::get<Block*>(node));
+        else if(node.which() == 9)
+            return visit_VarDecl(boost::get<VarDecl*>(node));
+        else if(node.which() == 10)
+            return visit_Type(boost::get<Type*>(node));
         else
             error();
     }
@@ -50,16 +59,20 @@ public:
             return visit(node->left) - visit(node->right);
         else if (node->op.type == MUL)
             return visit(node->left) * visit(node->right);
-        else if (node->op.type == DIV)
+        else if (node->op.type == INTEGER_DIV)
+            return int(visit(node->left) / visit(node->right));
+        else if (node->op.type == FLOAT_DIV)
             return visit(node->left) / visit(node->right);
         else if (node->op.type == POW)
             return int(pow(visit(node->left), visit(node->right)) + 0.5);
     }
 
-    int visit_Num(Num* node)
+    float visit_Num(Num* node)
     {
-        //type check here
-        return stoi(node->value);
+        if (node->token.type == INTEGER_CONST)
+            return stoi(node->value);
+        else
+            return stof(node->value);
     }
 
     int visit_UnaryOp(UnaryOp* node)
@@ -102,6 +115,31 @@ public:
             _Exit(10);
         }
         return GLOBAL_SCOPE[var_name];
+    }
+
+    int visit_Type(Type* node)
+    {
+        return 0;
+    }
+
+    int visit_VarDecl(VarDecl* node)
+    {
+        return 0;
+    }
+
+    int visit_Block(Block* node)
+    {
+        for (auto declaration : node->declarations)
+            visit(declaration);
+        visit(node->compound_statement);
+
+        return 0;
+    }
+
+    int visit_Program(Program* node)
+    {
+        visit(node->block);
+        return 0;
     }
 
     int interpret()

@@ -11,7 +11,7 @@ int main()
 
     string temp = text;
 
-    cout << text;
+    cout << text<<endl;
 
 
     Lexer lexer(text);

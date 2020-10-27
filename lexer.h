@@ -177,12 +177,11 @@ public:
     /* ******LEXICAL ANALYSER****** */
     Token get_next_token()
     {
-        while (current_char == ' ')
-            skip_whitspace();
-
         if (current_char == '\0')
             return Token(EOL, "\0");
 
+        while (current_char == ' ')
+            skip_whitspace();
 
         string current_char_str;
         current_char_str = current_char;
@@ -217,13 +216,6 @@ public:
         if (current_char == '*')
         {
             Token token(MUL, current_char_str);
-            advance();
-            return token;
-        }
-
-        if (current_char == '/')
-        {
-            Token token(DIV, current_char_str);
             advance();
             return token;
         }
@@ -298,6 +290,8 @@ public:
         }
 
         //If it isnt a digit or + or -, then some other char, hence show error
+        cout << int(current_char) << endl;
+        cout << pos << endl;
         error();
     }
 };
