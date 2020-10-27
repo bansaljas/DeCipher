@@ -1,6 +1,4 @@
-#pragma once
 #include "lexer.h"
-
 
 /* ###############################
    #        PARSER               #
@@ -9,6 +7,65 @@
 
 class AST
 {};
+
+class Program : public AST
+{
+
+public:
+    string name;
+    boostvar block;
+
+    Program(string name, boostvar block)
+    {
+        this->name = name;
+        this->block = block;
+    }
+};
+
+class Block : public AST
+{
+
+public:
+    vector<boostvar> declarations;
+    boostvar compound_statement;
+
+    Block(vector<boostvar> declarations, boostvar compound_statement)
+    {
+        this->declarations = declarations;
+        this->compound_statement = compound_statement;
+    }
+};
+
+
+
+class VarDecl : public AST
+{
+
+public:
+    boostvar var_node;
+    boostvar type_node;
+
+    VarDecl(boostvar var_node, boostvar type_node)
+    {
+        this->var_node = var_node;
+        this->type_node = type_node;
+    }
+};
+
+
+class Type : public AST
+{
+
+public:
+    Token token;
+    string value;
+
+    Type(Token token)
+    {
+        this->token = token;
+        this->value = token.value;
+    }
+};
 
 class Compound : public AST
 {
@@ -277,15 +334,87 @@ private:
         return root;
     }
 
-    boostvar program()
+    boostvar type_spec()
     {
-        //program : compound_statement DOT
-        boostvar node = compound_statement();
-        eat(DOT);
+        //type_spec : INTEGER | REAL
+        Token token = current_token;
+        if (current_token.type == INTEGER)
+            eat(INTEGER);
+        else
+            eat(REAL);
+
+        boostvar node = new Type(token);
         return node;
     }
 
+    vector<boostvar> variable_declarations()
+    {
+        //variable_declaration : ID (COMMA ID)* COLON type_spec
+        vector<boostvar> var_nodes;
 
+        //storing the first ID
+        var_nodes.push_back(new Var(current_token));
+        eat(ID);
+
+        while (current_token.type == COMMA)
+        {
+            eat(COMMA);
+            var_nodes.push_back(new Var(current_token));
+            eat(ID);
+        }
+
+        eat(COLON);
+
+        boostvar type_node = type_spec();
+        vector<boostvar> var_declarations;
+
+        for (auto var_node : var_nodes)
+            var_declarations.push_back(new VarDecl(var_node, type_node));
+
+        return var_declarations;
+    }
+
+    vector<boostvar> declarations()
+    {
+        //declarations: VAR(variable_declaration SEMI) + | empty
+        vector<boostvar> declarations;
+        if (current_token.type == VAR)
+        {
+            eat(VAR);
+            while (current_token.type == ID)
+            {
+                vector<boostvar> var_decls = variable_declarations();
+                for (auto var_decl : var_decls)
+                    declarations.push_back(var_decl);
+                eat(SEMI);
+            }
+        }
+        if (declarations.size() == 0)
+            error();
+        return declarations;
+    }
+
+    boostvar block()
+    {
+        //block : declarations compound_statement
+        vector<boostvar> declaration_nodes = declarations();
+        boostvar compound_statement_node = compound_statement();
+        boostvar node = new Block(declaration_nodes, compound_statement_node);
+        return node;
+    }
+
+    boostvar program()
+    {
+        //program : PROGRAM variable SEMI block DOT
+        eat(PROGRAM);
+        Var* var_node = boost::get<Var*>(variable());
+        string program_name = var_node->value;
+        eat(SEMI);
+        boostvar block_node = block();
+        boostvar program_node = new Program(program_name, block_node);
+        eat(DOT);
+        return program_node;
+    }
 
 public:
     Parser() {}
