@@ -1,3 +1,4 @@
+#pragma once
 #include "lexer.h"
 
 /* ###############################
@@ -59,6 +60,8 @@ class Type : public AST
 public:
     Token token;
     string value;
+
+    Type() {}
 
     Type(Token token)
     {
