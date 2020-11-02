@@ -126,6 +126,10 @@ public:
         return 0;
     }
 
+    int visit_ProcedureDecl(ProcedureDecl* node) {
+        return 0;
+    }
+
     int visit_Block(Block* node)
     {
         for (auto declaration : node->declarations)

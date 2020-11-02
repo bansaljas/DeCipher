@@ -50,7 +50,8 @@ public:
 };
 
 ostream& operator<<(ostream& strm, const VarSymbol& varSymbol) {
-	return strm << "<{" << varSymbol.name << " : " << varSymbol.type.value << "}>";
+    Type* type = boost::get<Type *>(varSymbol.type);
+	return strm << "<{" << varSymbol.name << " : " << type->value << "}>";
 }
 
 class SymbolTable
@@ -100,12 +101,13 @@ public:
 
     void error()
     {
-        cout << "ERROR:: No such parsing method present\n";
+        cout << "ERROR:: No such symbol method exists\n";
         _Exit(10);
     }
 
     void visit(boostvar node)
     {
+        //need to add ProcedureDecl-13 condition too
         if (node.which() == 0)
             visit_BinOp(boost::get<BinOp*>(node));
         else if (node.which() == 1)
@@ -154,6 +156,22 @@ public:
 
     void visit_NoOp(NoOp* node)
     {
+        return;
+    }
+
+    void visit_Assign(Assign* node) {
+        Var* left = boost::get<Var*>(node->left);
+        string var_name = left->value;
+        boostvar var_symbol = symtab.lookup(var_name);
+        visit(node->right);
+    }
+
+    void visit_Var(Var* node) {
+        string var_name = node->value;
+        boostvar var_symbol = symtab.lookup(var_name);
+    }
+
+    void visit_ProcedureDecl(ProcedureDecl* node) {
         return;
     }
 

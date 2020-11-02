@@ -20,8 +20,9 @@ class VarDecl;
 class Type;
 class BuiltinTypeSymbol;
 class VarSymbol;
+class ProcedureDecl;
 
-#define boostvar boost::variant<BinOp*, Num*, UnaryOp*, Compound*, Assign*, Var*, NoOp*, Program*, Block*, VarDecl*, Type*, BuiltinTypeSymbol*, VarSymbol*>
+#define boostvar boost::variant<BinOp*, Num*, UnaryOp*, Compound*, Assign*, Var*, NoOp*, Program*, Block*, VarDecl*, Type*, BuiltinTypeSymbol*, VarSymbol*, ProcedureDecl*>
 
 unordered_map<string, float> GLOBAL_SCOPE;
 
@@ -33,7 +34,7 @@ unordered_map<string, float> GLOBAL_SCOPE;
 string INTEGER = "INTEGER", PLUS = "PLUS", MINUS = "MINUS", MUL = "MUL", DIV = "DIV", EOL = "EOL", LPAREN = "(", RPAREN = ")", POW = "POW", BEGIN = "BEGIN", END = "END", DOT = "DOT",
 ID = "ID", ASSIGN = "ASSIGN", SEMI = "SEMI", PROGRAM = "PROGRAM", VAR = "VAR", COLON = "COLON",
 COMMA = "COMMA", REAL = "REAL", INTEGER_CONST = "INTEGER_CONST", REAL_CONST = "REAL_CONST",
-INTEGER_DIV = "INTEGER_DIV", FLOAT_DIV = "FLOAT_DIV";
+INTEGER_DIV = "INTEGER_DIV", FLOAT_DIV = "FLOAT_DIV", PROCEDURE = "PROCEDURE";
 
 class Token
 {
@@ -94,6 +95,7 @@ public:
         RESERVED_KEYWORDS[REAL] = Token("REAL", REAL);
         RESERVED_KEYWORDS[BEGIN] = Token("BEGIN", BEGIN);
         RESERVED_KEYWORDS[END] = Token("END", END);
+        RESERVED_KEYWORDS[PROCEDURE] = Token("PROCEDURE", PROCEDURE);
     }
 
     void error()
