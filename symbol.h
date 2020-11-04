@@ -60,24 +60,33 @@ class SymbolTable
 public:
 	unordered_map<string, boostvar> symbols;
 
+    SymbolTable() {
+        _init_builtins();
+    }
+
+    void _init_builtins()
+    {
+        insert(new BuiltinTypeSymbol("INTEGER"));
+        insert(new BuiltinTypeSymbol("REAL"));
+    }
+
 	void error(string name)
 	{
 		cout << name << " does not exist.";
 		_Exit(10);
 	}
 
-	void define(boostvar symbol)
-	{
-		cout << "Define: " << symbol;
-		if (symbol.which() == 11)
-			symbols[boost::get<BuiltinTypeSymbol*>(symbol)->name] = symbol;
-		else if (symbol.which() == 12)
-			symbols[boost::get<VarSymbol*>(symbol)->name] = symbol;
-	}
+    void insert(boostvar symbol)
+    {
+        if (symbol.which() == 11)
+            symbols[boost::get<BuiltinTypeSymbol*>(symbol)->name] = symbol;
+        else if (symbol.which() == 12)
+            symbols[boost::get<VarSymbol*>(symbol)->name] = symbol; 
+    }
 
 	boostvar lookup(string name)
 	{
-		cout << "Lookup: " << name;
+		//cout << "Lookup: " << name;
 		if (symbols.find(name) != symbols.end())
 		{
 			boostvar symbol = symbols[name];
@@ -87,6 +96,8 @@ public:
 	}
 };
 
+
+
 ostream& operator<<(ostream& strm, const SymbolTable& symbolTable) {
 	string information;
 	for (auto value : symbolTable.symbols)
@@ -94,7 +105,7 @@ ostream& operator<<(ostream& strm, const SymbolTable& symbolTable) {
 	return strm << "Symbols: {" + information;
 }
 
-class SymbolTableBuilder {
+class SemanticAnalyzer {
 
 public:
     SymbolTable symtab;
@@ -183,7 +194,11 @@ public:
         Var* var_node = boost::get<Var*>(node->var_node);
         string var_name = var_node->value;
         boostvar var_symbol = new VarSymbol(var_name, type_symbol);
-        symtab.define(var_symbol);
+        if (symtab.symbols.count(var_name)) {
+            cout << "Duplicate identifier found " << var_name;
+            _Exit(10);
+        }
+        symtab.insert(var_symbol);
     }
 
     void visit_Block(Block* node)

@@ -110,7 +110,7 @@ public:
         string var_name = node->value;
         if (GLOBAL_SCOPE.find(var_name) == GLOBAL_SCOPE.end())
         {
-            cout << "ERROR:: Variable not defined.\n";
+            cout << "ERROR:: Variable "<< var_name <<" not defined.\n";
             _Exit(10);
         }
         return GLOBAL_SCOPE[var_name];
