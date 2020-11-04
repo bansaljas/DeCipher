@@ -37,18 +37,6 @@ public:
     }
 };
 
-class ProcedureDecl : public AST
-{
-public:
-    string proc_name;
-    boostvar block_node;
-
-    ProcedureDecl(string proc_name, boostvar block_node) {
-        this->proc_name = proc_name;
-        this->block_node = block_node;
-    }
-};
-
 
 
 class VarDecl : public AST
@@ -398,7 +386,7 @@ private:
 
     vector<boostvar> declarations()
     {
-        //declarations: VAR(variable_declaration SEMI)+ | (PROCEDURE ID SEMI block SEMI)* | empty
+        //declarations: VAR(variable_declaration SEMI) + | empty
         vector<boostvar> declarations;
         if (current_token.type == VAR)
         {
@@ -411,19 +399,6 @@ private:
                 eat(SEMI);
             }
         }
-
-        while (current_token.type == PROCEDURE)
-        {
-            eat(PROCEDURE);
-            string proc_name = current_token.value;
-            eat(ID);
-            eat(SEMI);
-            boostvar block_node = block();
-            boostvar proc_decl = new ProcedureDecl(proc_name, block_node);
-            declarations.push_back(proc_decl);
-            eat(SEMI);
-        }
-
         if (declarations.size() == 0)
             error();
         return declarations;

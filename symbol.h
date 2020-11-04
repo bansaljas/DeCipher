@@ -1,6 +1,5 @@
 #pragma once
 #include "parser.h"
-#include <boost/functional/hash.hpp>
 
 class Symbol
 {
@@ -96,8 +95,6 @@ public:
 	}
 };
 
-
-
 ostream& operator<<(ostream& strm, const SymbolTable& symbolTable) {
 	string information;
 	for (auto value : symbolTable.symbols)
@@ -171,9 +168,7 @@ public:
     }
 
     void visit_Assign(Assign* node) {
-        Var* left = boost::get<Var*>(node->left);
-        string var_name = left->value;
-        boostvar var_symbol = symtab.lookup(var_name);
+        visit(node->left);
         visit(node->right);
     }
 
@@ -193,11 +188,11 @@ public:
         boostvar type_symbol = symtab.lookup(type_name);
         Var* var_node = boost::get<Var*>(node->var_node);
         string var_name = var_node->value;
-        boostvar var_symbol = new VarSymbol(var_name, type_symbol);
-        if (symtab.symbols.count(var_name)) {
+        if (symtab.symbols.find(var_name) != symtab.symbols.end()) {
             cout << "Duplicate identifier found " << var_name;
             _Exit(10);
         }
+        boostvar var_symbol = new VarSymbol(var_name, type_symbol);
         symtab.insert(var_symbol);
     }
 
