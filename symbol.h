@@ -53,13 +53,29 @@ ostream& operator<<(ostream& strm, const VarSymbol& varSymbol) {
 	return strm << "<{" << varSymbol.name << " : " << type->value << "}>";
 }
 
-class SymbolTable
+class ProcedureSymbol : public Symbol
+{
+public:
+    string name;
+    vector<boostvar> params;
+    ProcedureSymbol(string name, vector<boostvar>params) 
+    {
+        Symbol symbol(name);
+        this->params = params;
+    }
+};
+
+class ScopedSymbolTable
 {
 
 public:
 	unordered_map<string, boostvar> symbols;
+    string scope_name;
+    int scope_level;
 
-    SymbolTable() {
+    ScopedSymbolTable(string scope_name, int scope_level) {
+        this->scope_name = scope_name;
+        this->scope_level = scope_level;
         _init_builtins();
     }
 
@@ -80,7 +96,9 @@ public:
         if (symbol.which() == 11)
             symbols[boost::get<BuiltinTypeSymbol*>(symbol)->name] = symbol;
         else if (symbol.which() == 12)
-            symbols[boost::get<VarSymbol*>(symbol)->name] = symbol; 
+            symbols[boost::get<VarSymbol*>(symbol)->name] = symbol;
+        else if (symbol.which() == 15)
+            symbols[boost::get<ProcedureSymbol*>(symbol)->name] = symbol;
     }
 
 	boostvar lookup(string name)
@@ -95,17 +113,18 @@ public:
 	}
 };
 
-ostream& operator<<(ostream& strm, const SymbolTable& symbolTable) {
+ostream& operator<<(ostream& strm, const ScopedSymbolTable& symbolTable) {
 	string information;
 	for (auto value : symbolTable.symbols)
 		information += " " + value.first;
 	return strm << "Symbols: {" + information;
+    //can add printing of scoped symbol table
 }
 
 class SemanticAnalyzer {
 
 public:
-    SymbolTable symtab;
+    ScopedSymbolTable scope = ScopedSymbolTable("GLOBAL", 1);
 
     void error()
     {
@@ -174,7 +193,7 @@ public:
 
     void visit_Var(Var* node) {
         string var_name = node->value;
-        boostvar var_symbol = symtab.lookup(var_name);
+        boostvar var_symbol = scope.lookup(var_name);
     }
 
     void visit_ProcedureDecl(ProcedureDecl* node) {
@@ -185,15 +204,15 @@ public:
     {
         Type* type_node = boost::get<Type*>(node->type_node);
         string type_name = type_node->value;
-        boostvar type_symbol = symtab.lookup(type_name);
+        boostvar type_symbol = scope.lookup(type_name);
         Var* var_node = boost::get<Var*>(node->var_node);
         string var_name = var_node->value;
-        if (symtab.symbols.find(var_name) != symtab.symbols.end()) {
+        if (scope.symbols.find(var_name) != scope.symbols.end()) {
             cout << "Duplicate identifier found " << var_name;
             _Exit(10);
         }
         boostvar var_symbol = new VarSymbol(var_name, type_symbol);
-        symtab.insert(var_symbol);
+        scope.insert(var_symbol);
     }
 
     void visit_Block(Block* node)

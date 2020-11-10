@@ -21,8 +21,10 @@ class Type;
 class BuiltinTypeSymbol;
 class VarSymbol;
 class ProcedureDecl;
+class Param;
+class ProcedureSymbol;
 
-#define boostvar boost::variant<BinOp*, Num*, UnaryOp*, Compound*, Assign*, Var*, NoOp*, Program*, Block*, VarDecl*, Type*, BuiltinTypeSymbol*, VarSymbol*, ProcedureDecl*>
+#define boostvar boost::variant<BinOp*, Num*, UnaryOp*, Compound*, Assign*, Var*, NoOp*, Program*, Block*, VarDecl*, Type*, BuiltinTypeSymbol*, VarSymbol*, ProcedureDecl*, Param*, ProcedureSymbol*>
 
 unordered_map<string, float> GLOBAL_SCOPE;
 

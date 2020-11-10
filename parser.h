@@ -37,15 +37,35 @@ public:
     }
 };
 
+class Param : public AST
+{
+public:
+    Param()
+    {
+
+    }
+    boostvar var_node;
+    boostvar type_node;
+    Param(boostvar var_node, boostvar type_node)
+    {
+        this->var_node = var_node;
+        this->type_node = type_node;
+    }
+};
+
 class ProcedureDecl : public AST
 {
 public:
+
     string proc_name;
     boostvar block_node;
+    vector<boostvar> params;
 
-    ProcedureDecl(string proc_name, boostvar block_node) {
+
+    ProcedureDecl(string proc_name, boostvar block_node, vector<boostvar> params) {
         this->proc_name = proc_name;
         this->block_node = block_node;
+        this->params = params;
     }
 };
 
@@ -398,7 +418,7 @@ private:
 
     vector<boostvar> declarations()
     {
-        //declarations: VAR(variable_declaration SEMI)+ | (PROCEDURE ID SEMI block SEMI)* | empty
+    //declarations: (VAR(variable_declaration SEMI) + )*| (PROCEDURE ID(LPAREN formal_parameter_list RPAREN) ? SEMI block SEMI) *| empty
         vector<boostvar> declarations;
         if (current_token.type == VAR)
         {
@@ -419,14 +439,26 @@ private:
             eat(ID);
             eat(SEMI);
             boostvar block_node = block();
-            boostvar proc_decl = new ProcedureDecl(proc_name, block_node);
+            boostvar proc_decl = new ProcedureDecl(proc_name, block_node, params);
             declarations.push_back(proc_decl);
             eat(SEMI);
+            //need to define params
         }
 
         if (declarations.size() == 0)
             error();
         return declarations;
+    }
+
+    void formal_parameter_list()
+    {
+        //formal_parameter_list : formal_parameters| formal_parameters SEMI formal_parameter_list
+    }
+
+    void formal_parameter()
+    {
+        //formal_parameters : ID (COMMA ID)* COLON type_spec """
+        vector<boostvar> param_nodes;
     }
 
     boostvar block()
@@ -450,6 +482,8 @@ private:
         eat(DOT);
         return program_node;
     }
+
+
 
 public:
     Parser() {}
