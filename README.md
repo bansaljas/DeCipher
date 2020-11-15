@@ -92,16 +92,31 @@ Following is a document, entailing all the work we have done till now, the vario
    - We then prepared a few grammar rules (productions) for our interpreter.
    - Added functionality for multiplication, division, exponentiation along with handling parenthesis.
    - Looked into edge cases and made a few minor fixes.
+   
+---
+
+<ins>**15 October 2020 - 30 October 2020:**</ins>
+- **Implementation Phase 4**
+
+   - Started with the implementation of Abstract Syntax Trees.
+   - Added the functionality to evaluate Unary Operators.
+   - Explored more into the functionality of an interpreter and completed AST implementation.
+   - Created various header files for better code readability.
+   
+---
+
+<ins>**1 Novemeber 2020 - 15 November 2020:**</ins>
+- **Implementation Phase 5**
+  
+   - Started with the implementation of Symbol Tables to perform Semantic Analysis.
+   - Fixed a few bugs caused due to some edge cases.
+   - Added the feature of evaluating Procedures having arguments.
+   - Improved the Semantic Analyser further and looked into the concept of Scopes.
 
 ---
 
-## Next Steps
-
-- Re-evaluating our approach from making a **Syntax Directed Interpreter** (Recursive Interpreter) towards a **Intermediate Representation Interpreter** by taking the help of Abstract Syntax Trees.  
-
 ## How to Run:
 
-- Compile the cpp code file named **calculator.cpp** (Ignore the warnings, if any).
-- Now run the executable file (a.exe).
-- Now, **calc>** would appear, where you can give any arithmetic expression to be evaluated. For example: **(4+1) ^ 2 - 3*2**
-- If you wish to exit the interpreter, type **quit** and the code will stop executing.
+- The code will run on *Visual Studio Code 2019*. You need to connect the project with **C++ Boost Externl Library**.
+- Now give the program you'd like to evaluate in *sample.txt* file.
+- Now, run the *main.cpp* file and you'd get the value of all the variables used in the program.
