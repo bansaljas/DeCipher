@@ -104,7 +104,7 @@ public:
             symbols[boost::get<ProcedureSymbol*>(symbol)->name] = symbol;
     }
 
-    boostvar lookup(string name);
+    boostvar lookup(string name, bool current_scope_only = false);
 }; 
 
 ostream& operator<<(ostream& strm, const ScopedSymbolTable& symbolTable) {
@@ -117,7 +117,7 @@ ostream& operator<<(ostream& strm, const ScopedSymbolTable& symbolTable) {
 
 stack<ScopedSymbolTable> enclosed_scopes;
 
-boostvar ScopedSymbolTable :: lookup(string name)
+boostvar ScopedSymbolTable :: lookup(string name, bool current_scope_only)
 {
     cout << "Lookup: " << name;
 
@@ -127,7 +127,7 @@ boostvar ScopedSymbolTable :: lookup(string name)
         return symbol;
     }
 
-    if (enclosed_scopes.size() > 1) {
+    if (!current_scope_only && enclosed_scopes.size() > 1) {
         ScopedSymbolTable enclosed_scope = enclosed_scopes.top();
         enclosed_scopes.pop();
         boostvar symbol = enclosed_scope.lookup(name);
@@ -247,10 +247,10 @@ public:
         boostvar type_symbol = current_scope.lookup(type_name);
         Var* var_node = boost::get<Var*>(node->var_node);
         string var_name = var_node->value;
-        //if (current_scope.symbols.find(var_name) != current_scope.symbols.end()) {
-        //    cout << "Duplicate identifier found " << var_name;
-        //    _Exit(10);
-        //}
+        if (current_scope.symbols.find(var_name) != current_scope.symbols.end()) {
+            cout << "Duplicate identifier found " << var_name;
+            _Exit(10);
+        }
         boostvar var_symbol = new VarSymbol(var_name, type_symbol);
         current_scope.insert(var_symbol);
     }

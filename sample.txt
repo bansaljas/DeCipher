@@ -2,10 +2,14 @@ PROGRAM Part10AST;
 VAR
    a, b : INTEGER;
    y    : REAL;
-   a    : REAL;
-
+   
+   PROCEDURE alpha;
+	VAR
+	 a : INTEGER;
+	BEGIN
+	END;
+   
 BEGIN  {PART10}
-   a := 2;
    b := 10 * a + 10 * a DIV 4;
    y := 20 / 7 + 3.14;
 END. {PART10}
