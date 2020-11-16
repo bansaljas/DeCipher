@@ -46,6 +46,8 @@ public:
             return visit_VarDecl(boost::get<VarDecl*>(node));
         else if(node.which() == 10)
             return visit_Type(boost::get<Type*>(node));
+        else if (node.which() == 16)
+            visit_Print(boost::get<Print*>(node));
         else
             error();
     }
@@ -103,6 +105,14 @@ public:
         string var_name = boost::get<Var*>(node->left)->value;
         GLOBAL_SCOPE[var_name] = visit(node->right);
         return GLOBAL_SCOPE[var_name];
+    }
+
+    int visit_Print(Print* node)
+    {
+        cout << "\nTHE RESULT IS: ";
+        Var* output = boost::get<Var*>(node->output_variable);
+        cout << GLOBAL_SCOPE[output->value] << endl;
+        return 0;
     }
 
     int visit_Var(Var* node)

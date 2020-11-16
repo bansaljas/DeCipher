@@ -172,6 +172,8 @@ public:
             visit_Block(boost::get<Block*>(node));
         else if (node.which() == 9)
             visit_VarDecl(boost::get<VarDecl*>(node));
+        else if (node.which() == 16)
+            visit_Print(boost::get<Print*>(node));
         else
             error();
     }
@@ -206,6 +208,11 @@ public:
     void visit_Assign(Assign* node) {
         visit(node->left);
         visit(node->right);
+    }
+
+    void visit_Print(Print* node)
+    {
+        visit(node->output_variable);
     }
 
     void visit_Var(Var* node) {

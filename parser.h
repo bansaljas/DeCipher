@@ -39,6 +39,7 @@ public:
 
 class Param : public AST
 {
+
 public:
     Param()
     {
@@ -55,6 +56,7 @@ public:
 
 class ProcedureDecl : public AST
 {
+
 public:
 
     string proc_name;
@@ -68,7 +70,17 @@ public:
     }
 };
 
+class Print : public AST
+{
 
+public:
+    boostvar output_variable;
+
+    Print(boostvar output_variable)
+    {
+        this->output_variable = output_variable;
+    }
+};
 
 class VarDecl : public AST
 {
@@ -326,13 +338,25 @@ private:
         return node;
     }
 
+    boostvar print_statement()
+    {
+        //print_statement: PRINT expr
+        Token token = current_token;
+        eat(PRINT);
+        boostvar output_variable = expr();
+        boostvar node = new Print(output_variable);
+        return node;
+    }
+
     boostvar statement()
     {
-        //statement: compound_statement | assignment_statement | empty
+        //statement: compound_statement | assignment_statement | print_statement | empty
         boostvar node;
 
         if (current_token.type == BEGIN)
             node = compound_statement();
+        else if (current_token.type == PRINT)
+            node = print_statement();
         else if (current_token.type == ID)
             node = assignment_statement();
         else
@@ -479,7 +503,6 @@ private:
         eat(DOT);
         return program_node;
     }
-
 
 
 public:
