@@ -62,10 +62,9 @@ public:
     vector<boostvar> params;
 
 
-    ProcedureDecl(string proc_name, boostvar block_node, vector<boostvar> params) {
+    ProcedureDecl(string proc_name, boostvar block_node) {
         this->proc_name = proc_name;
         this->block_node = block_node;
-        this->params = params;
     }
 };
 
@@ -439,14 +438,12 @@ private:
             eat(ID);
             eat(SEMI);
             boostvar block_node = block();
-            boostvar proc_decl = new ProcedureDecl(proc_name, block_node, params);
+            boostvar proc_decl = new ProcedureDecl(proc_name, block_node);
             declarations.push_back(proc_decl);
             eat(SEMI);
             //need to define params
         }
 
-        if (declarations.size() == 0)
-            error();
         return declarations;
     }
 

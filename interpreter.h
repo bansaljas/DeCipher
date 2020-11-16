@@ -8,12 +8,12 @@
 
 class Interpreter
 {
-    Parser parser;
+    boostvar tree;
 
 public:
-    Interpreter(Parser parser)
+    Interpreter(boostvar tree)
     {
-        this->parser = parser;
+        this->tree = tree;
     }
 
     void error()
@@ -147,7 +147,6 @@ public:
 
     int interpret()
     {
-        boostvar tree = parser.parse();
         return visit(tree);
     }
 };

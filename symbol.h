@@ -1,6 +1,5 @@
 #pragma once
 #include "parser.h"
-#include <stack>
 
 class Symbol
 {
@@ -29,7 +28,7 @@ class BuiltinTypeSymbol : public Symbol
 public:
 	BuiltinTypeSymbol(string name)
 	{
-		Symbol symbol(name);
+        this->name = name;
 	}
 };
 
@@ -45,7 +44,8 @@ class VarSymbol : public Symbol
 public:
 	VarSymbol(string name, boostvar type)
 	{
-		Symbol symbol(name, type);
+        this->name = name;
+        this->type = type;
 	}
 };
 
@@ -74,6 +74,7 @@ public:
     string scope_name;
     int scope_level;
 
+    //ScopedSymbolTable() {}
 
     ScopedSymbolTable(string scope_name, int scope_level) {
         this->scope_name = scope_name;
@@ -103,26 +104,8 @@ public:
             symbols[boost::get<ProcedureSymbol*>(symbol)->name] = symbol;
     }
 
-    boostvar lookup(string name)
-    {
-        //cout << "Lookup: " << name;
-        if (symbols.find(name) != symbols.end())
-        {
-            boostvar symbol = symbols[name];
-            return symbol;
-        }
-
-        if (!enclosed_scopes.empty()) {
-            ScopedSymbolTable enclosed_scope = enclosed_scopes.top();
-            enclosed_scopes.pop();
-            boostvar symbol = enclosed_scope.lookup(name);
-            enclosed_scopes.push(enclosed_scope);
-            return symbol;
-        }
-
-            error(name);
-    }
-}; stack<ScopedSymbolTable> enclosed_scopes;
+    boostvar lookup(string name);
+}; 
 
 ostream& operator<<(ostream& strm, const ScopedSymbolTable& symbolTable) {
 	string information;
@@ -132,10 +115,32 @@ ostream& operator<<(ostream& strm, const ScopedSymbolTable& symbolTable) {
     //can add printing of scoped symbol table
 }
 
+stack<ScopedSymbolTable> enclosed_scopes;
+
+boostvar ScopedSymbolTable :: lookup(string name)
+{
+    cout << "Lookup: " << name;
+
+    if (symbols.find(name) != symbols.end())
+    {
+        boostvar symbol = symbols[name];
+        return symbol;
+    }
+
+    if (enclosed_scopes.size() > 1) {
+        ScopedSymbolTable enclosed_scope = enclosed_scopes.top();
+        enclosed_scopes.pop();
+        boostvar symbol = enclosed_scope.lookup(name);
+        enclosed_scopes.push(enclosed_scope);
+        return symbol;
+    }
+
+    error(name);
+}
+
 class SemanticAnalyzer {
 
 public:
-    //ScopedSymbolTable scope = ScopedSymbolTable("GLOBAL", 1);
     ScopedSymbolTable current_scope = ScopedSymbolTable("", 0);
 
     void error()
@@ -242,10 +247,10 @@ public:
         boostvar type_symbol = current_scope.lookup(type_name);
         Var* var_node = boost::get<Var*>(node->var_node);
         string var_name = var_node->value;
-        if (current_scope.symbols.find(var_name) != current_scope.symbols.end()) {
-            cout << "Duplicate identifier found " << var_name;
-            _Exit(10);
-        }
+        //if (current_scope.symbols.find(var_name) != current_scope.symbols.end()) {
+        //    cout << "Duplicate identifier found " << var_name;
+        //    _Exit(10);
+        //}
         boostvar var_symbol = new VarSymbol(var_name, type_symbol);
         current_scope.insert(var_symbol);
     }

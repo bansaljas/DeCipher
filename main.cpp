@@ -11,12 +11,15 @@ int main()
 
     string temp = text;
 
-    cout << text<<endl;
+    cout << text << endl;
 
 
     Lexer lexer(text);
     Parser parser(lexer);
-    Interpreter interpreter(parser);
+    boostvar tree = parser.parse();
+    SemanticAnalyzer semantic_analyser;
+    semantic_analyser.visit(tree);
+    Interpreter interpreter(tree);
     int result = interpreter.interpret();
     for (auto i : GLOBAL_SCOPE)
         cout << i.first << " : " << i.second << "\n";

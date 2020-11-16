@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <unordered_map>
 #include <boost/variant.hpp>
+#include <stack>
 using namespace std;
 
 class BinOp;
