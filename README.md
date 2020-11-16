@@ -108,15 +108,15 @@ Following is a document, entailing all the work we have done till now, the vario
 <ins>**1 Novemeber 2020 - 15 November 2020:**</ins>
 - **Implementation Phase 5**
   
-   - Started with the implementation of Symbol Tables to perform Semantic Analysis.
+   - Started with the implementation of symbol tables to perform Semantic Analysis.
    - Fixed a few bugs caused due to some edge cases.
-   - Added the feature of evaluating Procedures having arguments.
-   - Improved the Semantic Analyser further and looked into the concept of Scopes.
+   - Added the feature of evaluating procedures having arguments.
+   - Improved the Semantic Analyser further and looked into the concept of scopes.
 
 ---
 
 ## How to Run:
 
-- The code will run on *Visual Studio Code 2019*. You need to connect the project with **C++ Boost Externl Library**.
+- The code will run on *Visual Studio Code 2019*. You need to connect the project with **C++ Boost External Library**.
 - Now give the program you'd like to evaluate in *sample.txt* file.
-- Now, run the *main.cpp* file and you'd get the value of all the variables used in the program.
+- Now, we can run the *main.cpp* file.
