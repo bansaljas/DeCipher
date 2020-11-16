@@ -9,7 +9,6 @@
 class Interpreter
 {
     Parser parser;
-    ScopedSymbolTable current_scope = ScopedSymbolTable("", 0);
 
 public:
     Interpreter(Parser parser)
@@ -127,25 +126,8 @@ public:
         return 0;
     }
 
-    void visit_ProcedureDecl(ProcedureDecl* node) {
-        string proc_name = node->proc_name;
-        ProcedureSymbol *proc_symbol =new ProcedureSymbol(proc_name, vector<boostvar>());
-        this->current_scope.insert(proc_symbol);
-        cout << "Enter scope: " << proc_name << endl;
-        
-        ScopedSymbolTable procedure_scope = ScopedSymbolTable(proc_name, 2);
-        this->current_scope = procedure_scope;
-
-        for (auto param : node->params) {
-            boostvar param_type = this->current_scope.lookup(param.type_node.value);
-            string param_name = param.var_node.value;
-            VarSymbol *var_symbol =new VarSymbol(param_name, param_type);
-            this->current_scope.insert(var_symbol);//needs to be sorted
-            proc_symbol->params.push_back(var_symbol);
-        }
-        visit(node->block_node);
-        cout << "procedure_scope" << endl;
-        cout << "Leave scope : " << proc_name << endl;
+    int visit_ProcedureDecl(ProcedureDecl* node) {
+        return 0;
     }
 
     int visit_Block(Block* node)
@@ -159,12 +141,7 @@ public:
 
     int visit_Program(Program* node)
     {
-        cout << "Enter Scope : GLOBAL" << endl;
-        ScopedSymbolTable global_scope = ScopedSymbolTable("GLOBAL", 1);
-        this->current_scope = global_scope;
         visit(node->block);
-        cout << "global_scope" << endl;
-        cout << "Leave scope : GLOBAL" << endl;
         return 0;
     }
 

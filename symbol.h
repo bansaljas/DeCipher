@@ -1,5 +1,6 @@
 #pragma once
 #include "parser.h"
+#include <stack>
 
 class Symbol
 {
@@ -69,9 +70,10 @@ class ScopedSymbolTable
 {
 
 public:
-	unordered_map<string, boostvar> symbols;
+    unordered_map<string, boostvar> symbols;
     string scope_name;
     int scope_level;
+
 
     ScopedSymbolTable(string scope_name, int scope_level) {
         this->scope_name = scope_name;
@@ -85,11 +87,11 @@ public:
         insert(new BuiltinTypeSymbol("REAL"));
     }
 
-	void error(string name)
-	{
-		cout << name << " does not exist.";
-		_Exit(10);
-	}
+    void error(string name)
+    {
+        cout << name << " does not exist.";
+        _Exit(10);
+    }
 
     void insert(boostvar symbol)
     {
@@ -101,17 +103,26 @@ public:
             symbols[boost::get<ProcedureSymbol*>(symbol)->name] = symbol;
     }
 
-	boostvar lookup(string name)
-	{
-		//cout << "Lookup: " << name;
-		if (symbols.find(name) != symbols.end())
-		{
-			boostvar symbol = symbols[name];
-			return symbol;
-		}
-		error(name);
-	}
-};
+    boostvar lookup(string name)
+    {
+        //cout << "Lookup: " << name;
+        if (symbols.find(name) != symbols.end())
+        {
+            boostvar symbol = symbols[name];
+            return symbol;
+        }
+
+        if (!enclosed_scopes.empty()) {
+            ScopedSymbolTable enclosed_scope = enclosed_scopes.top();
+            enclosed_scopes.pop();
+            boostvar symbol = enclosed_scope.lookup(name);
+            enclosed_scopes.push(enclosed_scope);
+            return symbol;
+        }
+
+            error(name);
+    }
+}; stack<ScopedSymbolTable> enclosed_scopes;
 
 ostream& operator<<(ostream& strm, const ScopedSymbolTable& symbolTable) {
 	string information;
@@ -124,7 +135,8 @@ ostream& operator<<(ostream& strm, const ScopedSymbolTable& symbolTable) {
 class SemanticAnalyzer {
 
 public:
-    ScopedSymbolTable scope = ScopedSymbolTable("GLOBAL", 1);
+    //ScopedSymbolTable scope = ScopedSymbolTable("GLOBAL", 1);
+    ScopedSymbolTable current_scope = ScopedSymbolTable("", 0);
 
     void error()
     {
@@ -193,26 +205,49 @@ public:
 
     void visit_Var(Var* node) {
         string var_name = node->value;
-        boostvar var_symbol = scope.lookup(var_name);
+        boostvar var_symbol = current_scope.lookup(var_name);
     }
 
     void visit_ProcedureDecl(ProcedureDecl* node) {
-        return;
+        string proc_name = node->proc_name;
+        ProcedureSymbol* proc_symbol = new ProcedureSymbol(proc_name, vector<boostvar>());
+        this->current_scope.insert(proc_symbol);
+        enclosed_scopes.push(current_scope);
+        cout << "Enter scope: " << proc_name << endl;
+
+        ScopedSymbolTable procedure_scope = ScopedSymbolTable(proc_name, this->current_scope.scope_level + 1);
+        this->current_scope = procedure_scope;
+
+        for (auto param : node->params) {
+            Param* param_node = boost::get<Param*>(param);
+            Type* type_node = boost::get<Type*>(param_node->type_node);
+            boostvar param_type = this->current_scope.lookup(type_node->value);
+            Var* var_node = boost::get<Var*>(param_node->var_node);
+            string param_name = var_node->value;
+            VarSymbol* var_symbol = new VarSymbol(param_name, param_type);
+            this->current_scope.insert(var_symbol);//needs to be sorted
+            proc_symbol->params.push_back(var_symbol);
+        }
+        visit(node->block_node);
+        cout << "procedure_scope" << endl;
+        this->current_scope = enclosed_scopes.top();
+        enclosed_scopes.pop();
+        cout << "Leave scope : " << proc_name << endl;
     }
 
     void visit_VarDecl(VarDecl* node)
     {
         Type* type_node = boost::get<Type*>(node->type_node);
         string type_name = type_node->value;
-        boostvar type_symbol = scope.lookup(type_name);
+        boostvar type_symbol = current_scope.lookup(type_name);
         Var* var_node = boost::get<Var*>(node->var_node);
         string var_name = var_node->value;
-        if (scope.symbols.find(var_name) != scope.symbols.end()) {
+        if (current_scope.symbols.find(var_name) != current_scope.symbols.end()) {
             cout << "Duplicate identifier found " << var_name;
             _Exit(10);
         }
         boostvar var_symbol = new VarSymbol(var_name, type_symbol);
-        scope.insert(var_symbol);
+        current_scope.insert(var_symbol);
     }
 
     void visit_Block(Block* node)
@@ -224,6 +259,14 @@ public:
 
     void visit_Program(Program* node)
     {
+        cout << "Enter Scope : GLOBAL" << endl;
+        ScopedSymbolTable global_scope = ScopedSymbolTable("GLOBAL", 1);
+        enclosed_scopes.push(current_scope);
+        this->current_scope = global_scope;
         visit(node->block);
+        cout << "global_scope" << endl;
+        this->current_scope = enclosed_scopes.top();
+        enclosed_scopes.pop();
+        cout << "Leave scope : GLOBAL" << endl;
     }
 };
