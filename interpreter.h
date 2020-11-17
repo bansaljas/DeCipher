@@ -40,12 +40,14 @@ public:
             return visit_NoOp(boost::get<NoOp*>(node));
         else if (node.which() == 7)
             return visit_Program(boost::get<Program*>(node));
-        else if(node.which() == 8)
+        else if (node.which() == 8)
             return visit_Block(boost::get<Block*>(node));
-        else if(node.which() == 9)
+        else if (node.which() == 9)
             return visit_VarDecl(boost::get<VarDecl*>(node));
-        else if(node.which() == 10)
+        else if (node.which() == 10)
             return visit_Type(boost::get<Type*>(node));
+        else if (node.which() == 13)
+            return visit_ProcedureDecl(boost::get<ProcedureDecl*>(node));
         else if (node.which() == 16)
             visit_Print(boost::get<Print*>(node));
         else

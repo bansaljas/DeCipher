@@ -1,11 +1,13 @@
-PROGRAM Part10AST;
-VAR
-   a, b : INTEGER;
-   y    : REAL;
-    
-BEGIN  {PART10}
-   a := 3;
-   PRINT a; 
-   b := 1 + a;
-   PRINT b;
-END. {PART10}
+PROGRAM Main;
+   VAR x, y : REAL;
+
+   PROCEDURE Alpha;
+      VAR 
+          a : INTEGER;
+   BEGIN
+      x := a + y;
+   END;
+
+BEGIN { Main }
+
+END.  { Main }

@@ -41,12 +41,11 @@ class Param : public AST
 {
 
 public:
-    Param()
-    {
-
-    }
     boostvar var_node;
     boostvar type_node;
+
+    Param() {}
+
     Param(boostvar var_node, boostvar type_node)
     {
         this->var_node = var_node;
@@ -62,7 +61,6 @@ public:
     string proc_name;
     boostvar block_node;
     vector<boostvar> params;
-
 
     ProcedureDecl(string proc_name, boostvar block_node) {
         this->proc_name = proc_name;
@@ -203,13 +201,15 @@ public:
 
 class Parser
 {
+
+public: 
     Lexer lexer;
     Token current_token;
 
 private:
-    void error()
+    void error(string error_code, Token token, string error_message = "")
     {
-        cout << "ERROR:: Invalid Syntax\n";
+        cout << "ERROR:: "<<error_code << "->" << token <<" line:: "<< lexer.lineno <<":"<<lexer.column << error_message << endl;
         _Exit(10);
     }
 
@@ -218,7 +218,10 @@ private:
         if (current_token.type == type)
             current_token = this->lexer.get_next_token();
         else
-            error();
+        {
+            string error_message = "\nExpected type: " + type;
+            error("UNEXPECTED_TOKEN", current_token, error_message);
+        }
     }
 
     boostvar atom()
@@ -256,7 +259,7 @@ private:
             boostvar node = variable();
             return node;
         }
-        error();
+        error("UNEXPECTED_TOKEN", current_token);
     }
 
     boostvar factor()
@@ -381,7 +384,7 @@ private:
         }
 
         if (current_token.type == ID)
-            error();
+            error("UNEXPECTED_TOKEN", current_token);
 
         return results;
     }
@@ -518,7 +521,7 @@ public:
     {
         boostvar node = program();
         if (current_token.type != EOL)
-            error();
+            error("UNEXPECTED_TOKEN", current_token);
         return node;
     }
 };

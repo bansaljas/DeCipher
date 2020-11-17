@@ -88,9 +88,9 @@ public:
         insert(new BuiltinTypeSymbol("REAL"));
     }
 
-    void error(string name)
+    void error(string error_code, string name)
     {
-        cout << name << " does not exist.";
+        cout <<"ERROR:: "<< error_code << " -> (ID, " << name << ")" << endl;
         _Exit(10);
     }
 
@@ -112,14 +112,13 @@ ostream& operator<<(ostream& strm, const ScopedSymbolTable& symbolTable) {
 	for (auto value : symbolTable.symbols)
 		information += " " + value.first;
 	return strm << "Symbols: {" + information;
-    //can add printing of scoped symbol table
 }
 
 stack<ScopedSymbolTable> enclosed_scopes;
 
 boostvar ScopedSymbolTable :: lookup(string name, bool current_scope_only)
 {
-    cout << "Lookup: " << name;
+    cout << "Lookup: " << name << endl;
 
     if (symbols.find(name) != symbols.end())
     {
@@ -135,7 +134,7 @@ boostvar ScopedSymbolTable :: lookup(string name, bool current_scope_only)
         return symbol;
     }
 
-    error(name);
+    error("Variable not found", name);
 }
 
 class SemanticAnalyzer {
@@ -143,15 +142,14 @@ class SemanticAnalyzer {
 public:
     ScopedSymbolTable current_scope = ScopedSymbolTable("", 0);
 
-    void error()
+    void error(string error_code)
     {
-        cout << "ERROR:: No such symbol method exists\n";
+        cout << "ERROR:: " << error_code << endl;
         _Exit(10);
     }
 
     void visit(boostvar node)
     {
-        //need to add ProcedureDecl-13 condition too
         if (node.which() == 0)
             visit_BinOp(boost::get<BinOp*>(node));
         else if (node.which() == 1)
@@ -172,10 +170,12 @@ public:
             visit_Block(boost::get<Block*>(node));
         else if (node.which() == 9)
             visit_VarDecl(boost::get<VarDecl*>(node));
+        else if (node.which() == 13)
+            visit_ProcedureDecl(boost::get<ProcedureDecl*>(node));
         else if (node.which() == 16)
             visit_Print(boost::get<Print*>(node));
         else
-            error();
+            error("INVALID PARSING METHOD");
     }
 
     void visit_BinOp(BinOp* node)
@@ -215,14 +215,17 @@ public:
         visit(node->output_variable);
     }
 
-    void visit_Var(Var* node) {
+    void visit_Var(Var* node) 
+    {
         string var_name = node->value;
         boostvar var_symbol = current_scope.lookup(var_name);
     }
 
-    void visit_ProcedureDecl(ProcedureDecl* node) {
+    void visit_ProcedureDecl(ProcedureDecl* node) 
+    {
         string proc_name = node->proc_name;
         ProcedureSymbol* proc_symbol = new ProcedureSymbol(proc_name, vector<boostvar>());
+
         this->current_scope.insert(proc_symbol);
         enclosed_scopes.push(current_scope);
         cout << "Enter scope: " << proc_name << endl;
@@ -230,20 +233,26 @@ public:
         ScopedSymbolTable procedure_scope = ScopedSymbolTable(proc_name, this->current_scope.scope_level + 1);
         this->current_scope = procedure_scope;
 
-        for (auto param : node->params) {
+        for (auto param : node->params) 
+        {
             Param* param_node = boost::get<Param*>(param);
             Type* type_node = boost::get<Type*>(param_node->type_node);
             boostvar param_type = this->current_scope.lookup(type_node->value);
+
             Var* var_node = boost::get<Var*>(param_node->var_node);
             string param_name = var_node->value;
+
             VarSymbol* var_symbol = new VarSymbol(param_name, param_type);
             this->current_scope.insert(var_symbol);//needs to be sorted
+
             proc_symbol->params.push_back(var_symbol);
         }
         visit(node->block_node);
         cout << "procedure_scope" << endl;
+
         this->current_scope = enclosed_scopes.top();
         enclosed_scopes.pop();
+
         cout << "Leave scope : " << proc_name << endl;
     }
 
@@ -251,11 +260,14 @@ public:
     {
         Type* type_node = boost::get<Type*>(node->type_node);
         string type_name = type_node->value;
+
         boostvar type_symbol = current_scope.lookup(type_name);
         Var* var_node = boost::get<Var*>(node->var_node);
         string var_name = var_node->value;
-        if (current_scope.symbols.find(var_name) != current_scope.symbols.end()) {
-            cout << "Duplicate identifier found " << var_name;
+
+        if (current_scope.symbols.find(var_name) != current_scope.symbols.end()) 
+        {
+            cout << "ERROR:: Duplicate variable found -> " << var_node->token <<endl;
             _Exit(10);
         }
         boostvar var_symbol = new VarSymbol(var_name, type_symbol);

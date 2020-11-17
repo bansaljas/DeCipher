@@ -6,7 +6,7 @@ int main()
     string line;
     ifstream MyReadfile("sample.txt");
     while (getline(MyReadfile, line))
-        text = text + line + " ";
+        text = text + line + "\n";
     text = text.substr(0, text.size() - 1);
 
     string temp = text;

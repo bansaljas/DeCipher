@@ -74,12 +74,16 @@ class Lexer
     string text;
     int pos;
     char current_char;
-
+    
 public:
+    int lineno, column;
+
     Lexer()
     {
         this->pos = 0;
         this->current_char = '\0';
+        this->lineno = 1;
+        this->column = 1;
     }
 
     Lexer(string text)
@@ -87,6 +91,8 @@ public:
         this->text = text;
         this->pos = 0;
         this->current_char = text[pos];
+        this->lineno = 1;
+        this->column = 1;
         add_keywords();
     }
 
@@ -105,7 +111,7 @@ public:
 
     void error()
     {
-        cout << "ERROR:: Error parsing the input\n";
+        cout << "ERROR:: Lexer error on '"<<current_char<< "' line:: "<<lineno<<":"<<column<<endl;
         _Exit(10);
     }
 
@@ -135,11 +141,20 @@ public:
 
     void advance()
     {
+        if (current_char == '\n')
+        {
+            this->lineno++;
+            this->column = 0;
+        }
+
         pos++;
         if (pos > text.size() - 1)
             current_char = '\0';
         else
+        {
             current_char = text[pos];
+            this->column++;
+        }
     }
 
     void skip_whitspace()
@@ -187,8 +202,15 @@ public:
     /* ******LEXICAL ANALYSER****** */
     Token get_next_token()
     {
-        while (current_char == ' ')
-            skip_whitspace();
+
+        while (current_char == '\n' || current_char == ' ')
+        {
+            if (current_char == '\n')
+                advance();
+
+            if (current_char == ' ')
+                skip_whitspace();
+        }
         
         if (current_char == '\0')
             return Token(EOL, "\0");
