@@ -25,8 +25,9 @@ class ProcedureDecl;
 class Param;
 class ProcedureSymbol;
 class Print;
+class ProcedureCall;
 
-#define boostvar boost::variant<BinOp*, Num*, UnaryOp*, Compound*, Assign*, Var*, NoOp*, Program*, Block*, VarDecl*, Type*, BuiltinTypeSymbol*, VarSymbol*, ProcedureDecl*, Param*, ProcedureSymbol*, Print*>
+#define boostvar boost::variant<BinOp*, Num*, UnaryOp*, Compound*, Assign*, Var*, NoOp*, Program*, Block*, VarDecl*, Type*, BuiltinTypeSymbol*, VarSymbol*, ProcedureDecl*, Param*, ProcedureSymbol*, Print*, ProcedureCall*>
 
 unordered_map<string, float> GLOBAL_SCOPE;
 
@@ -73,10 +74,10 @@ class Lexer
 {
     string text;
     int pos;
-    char current_char;
     
 public:
     int lineno, column;
+    char current_char;
 
     Lexer()
     {

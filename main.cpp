@@ -11,8 +11,6 @@ int main()
 
     string temp = text;
 
-    cout << text << endl;
-
 
     Lexer lexer(text);
     Parser parser(lexer);
@@ -21,6 +19,7 @@ int main()
     semantic_analyser.visit(tree);
     Interpreter interpreter(tree);
     int result = interpreter.interpret();
-    for (auto i : GLOBAL_SCOPE)
-        cout << i.first << " : " << i.second << "\n";
+
+    //for (auto i : GLOBAL_SCOPE)
+        //cout << i.first << " : " << i.second << "\n";
 }

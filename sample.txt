@@ -1,13 +1,4 @@
-PROGRAM Main;
-   VAR x, y : REAL;
+PROGRAM Main; {Comments}
 
-   PROCEDURE Alpha;
-      VAR 
-          a : INTEGER;
-   BEGIN
-      x := a + y;
-   END;
-
-BEGIN { Main }
-
-END.  { Main }
+BEGIN
+END.

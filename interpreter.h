@@ -49,7 +49,9 @@ public:
         else if (node.which() == 13)
             return visit_ProcedureDecl(boost::get<ProcedureDecl*>(node));
         else if (node.which() == 16)
-            visit_Print(boost::get<Print*>(node));
+            return visit_Print(boost::get<Print*>(node));
+        else if (node.which() == 17)
+            return visit_ProcedureCall(boost::get<ProcedureCall*>(node));
         else
             error();
     }
@@ -111,8 +113,8 @@ public:
 
     int visit_Print(Print* node)
     {
-        cout << "\nTHE RESULT IS: ";
         Var* output = boost::get<Var*>(node->output_variable);
+        cout << "\nValue of " << output->value << " is: ";
         cout << GLOBAL_SCOPE[output->value] << endl;
         return 0;
     }
@@ -139,6 +141,25 @@ public:
     }
 
     int visit_ProcedureDecl(ProcedureDecl* node) {
+        return 0;
+    }
+
+    int visit_ProcedureCall(ProcedureCall* node)
+    {
+        if (node->proc_symbol)
+        {
+            ProcedureSymbol* proc_symbol = node->proc_symbol;
+            for (int i = 0; i < proc_symbol->params.size(); i++)
+            {
+                VarSymbol* var = boost::get<VarSymbol*>(proc_symbol->params[i]);
+                string var_name = var->name;
+                boostvar assign_var = new Var(Token(ID, var_name));
+                visit_Assign(new Assign(assign_var, Token(ASSIGN, ":="), node->actual_params[i]));
+            }
+
+            visit(proc_symbol->block_node);
+        }
+        
         return 0;
     }
 

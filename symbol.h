@@ -59,9 +59,10 @@ class ProcedureSymbol : public Symbol
 public:
     string name;
     vector<boostvar> params;
+    boostvar block_node;
     ProcedureSymbol(string name, vector<boostvar>params) 
     {
-        Symbol symbol(name);
+        this->name = name;
         this->params = params;
     }
 };
@@ -118,7 +119,7 @@ stack<ScopedSymbolTable> enclosed_scopes;
 
 boostvar ScopedSymbolTable :: lookup(string name, bool current_scope_only)
 {
-    cout << "Lookup: " << name << endl;
+    //cout << "Lookup: " << name << endl;
 
     if (symbols.find(name) != symbols.end())
     {
@@ -174,6 +175,8 @@ public:
             visit_ProcedureDecl(boost::get<ProcedureDecl*>(node));
         else if (node.which() == 16)
             visit_Print(boost::get<Print*>(node));
+        else if (node.which() == 17)
+            visit_ProcedureCall(boost::get<ProcedureCall*>(node));
         else
             error("INVALID PARSING METHOD");
     }
@@ -225,6 +228,7 @@ public:
     {
         string proc_name = node->proc_name;
         ProcedureSymbol* proc_symbol = new ProcedureSymbol(proc_name, vector<boostvar>());
+        proc_symbol->block_node = node->block_node;
 
         this->current_scope.insert(proc_symbol);
         enclosed_scopes.push(current_scope);
@@ -248,12 +252,27 @@ public:
             proc_symbol->params.push_back(var_symbol);
         }
         visit(node->block_node);
-        cout << "procedure_scope" << endl;
+        //cout << "procedure_scope" << endl;
 
         this->current_scope = enclosed_scopes.top();
         enclosed_scopes.pop();
 
         cout << "Leave scope : " << proc_name << endl;
+    }
+
+    void visit_ProcedureCall(ProcedureCall* node)
+    {
+        string proc_name = node->proc_name;
+        boostvar proc = current_scope.lookup(proc_name);
+       
+        if (proc.which() == 15)
+        {
+            ProcedureSymbol* proc_symbol = boost::get<ProcedureSymbol*>(proc);
+            node->proc_symbol = proc_symbol;
+        }
+        for (auto param_node : node->actual_params)
+            visit(param_node);
+
     }
 
     void visit_VarDecl(VarDecl* node)
@@ -288,7 +307,7 @@ public:
         enclosed_scopes.push(current_scope);
         this->current_scope = global_scope;
         visit(node->block);
-        cout << "global_scope" << endl;
+        //cout << "global_scope" << endl;
         this->current_scope = enclosed_scopes.top();
         enclosed_scopes.pop();
         cout << "Leave scope : GLOBAL" << endl;

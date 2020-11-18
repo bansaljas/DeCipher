@@ -62,9 +62,28 @@ public:
     boostvar block_node;
     vector<boostvar> params;
 
-    ProcedureDecl(string proc_name, boostvar block_node) {
+    ProcedureDecl(string proc_name, boostvar block_node, vector<boostvar> params) {
         this->proc_name = proc_name;
         this->block_node = block_node;
+        this->params = params;
+    }
+};
+
+class ProcedureCall : public AST
+{
+
+public:
+    string proc_name;
+    vector<boostvar> actual_params;
+    Token token;
+    ProcedureSymbol* proc_symbol;
+
+    ProcedureCall(string proc_name, vector<boostvar> actual_params, Token token)
+    {
+        this->proc_name = proc_name;
+        this->actual_params = actual_params;
+        this->token = token;
+        this->proc_symbol = NULL;
     }
 };
 
@@ -353,13 +372,15 @@ private:
 
     boostvar statement()
     {
-        //statement: compound_statement | assignment_statement | print_statement | empty
+        //statement: compound_statement | assignment_statement | print_statement | proccall_statement | empty
         boostvar node;
 
         if (current_token.type == BEGIN)
             node = compound_statement();
         else if (current_token.type == PRINT)
             node = print_statement();
+        else if (current_token.type == ID && this->lexer.current_char == '(')
+            node = proccall_statement();
         else if (current_token.type == ID)
             node = assignment_statement();
         else
@@ -384,7 +405,7 @@ private:
         }
 
         if (current_token.type == ID)
-            error("UNEXPECTED_TOKEN", current_token);
+           error("UNEXPECTED_TOKEN", current_token);
 
         return results;
     }
@@ -442,9 +463,62 @@ private:
         return var_declarations;
     }
 
+    boostvar procedure_declaration()
+    {
+        //procedure_declaration : PROCEDURE ID(LPAREN formal_parameter_list RPAREN) ? SEMI block SEMI
+        eat(PROCEDURE);
+        string proc_name = this->current_token.value;
+        eat(ID);
+        vector<boostvar> params;
+
+        if (current_token.type == LPAREN)
+        {
+            eat(LPAREN);
+            params = formal_parameter_list();
+            eat(RPAREN);
+        }
+
+        eat(SEMI);
+        boostvar block_node = block();
+        boostvar proc_decl = new ProcedureDecl(proc_name, block_node, params);
+        eat(SEMI);
+
+        return proc_decl;
+    }
+
+    boostvar proccall_statement()
+    {
+        //proccall_statement : ID LPAREN (expr (COMMA expr)*)? RPAREN
+        Token token = this->current_token;
+        string proc_name = this->current_token.value;
+
+        eat(ID);
+        eat(LPAREN);
+
+        vector<boostvar> actual_params;
+        if (this->current_token.type != RPAREN)
+        {
+            boostvar node = expr();
+            actual_params.push_back(node);
+        }
+
+        while (this->current_token.type == COMMA)
+        {
+            eat(COMMA);
+            boostvar node = expr();
+            actual_params.push_back(node);
+        }
+
+        eat(RPAREN);
+
+        boostvar node = new ProcedureCall(proc_name, actual_params, token);
+
+        return node;
+    }
+
     vector<boostvar> declarations()
     {
-    //declarations: (VAR(variable_declaration SEMI) + )*| (PROCEDURE ID(LPAREN formal_parameter_list RPAREN) ? SEMI block SEMI) *| empty
+        //declarations: (VAR(variable_declaration SEMI) + )*| (PROCEDURE ID(LPAREN formal_parameter_list RPAREN) ? SEMI block SEMI) *| empty
         vector<boostvar> declarations;
         if (current_token.type == VAR)
         {
@@ -460,29 +534,57 @@ private:
 
         while (current_token.type == PROCEDURE)
         {
-            eat(PROCEDURE);
-            string proc_name = current_token.value;
-            eat(ID);
-            eat(SEMI);
-            boostvar block_node = block();
-            boostvar proc_decl = new ProcedureDecl(proc_name, block_node);
+            boostvar proc_decl = procedure_declaration();
             declarations.push_back(proc_decl);
-            eat(SEMI);
-            //need to define params
         }
 
         return declarations;
     }
 
-    void formal_parameter_list()
+    vector<boostvar> formal_parameters()
     {
-        //formal_parameter_list : formal_parameters| formal_parameters SEMI formal_parameter_list
+        //formal_parameters : ID (COMMA ID)* COLON type_spec
+
+        vector<boostvar> param_nodes;
+        vector<class Token> param_tokens;
+        param_tokens.push_back(current_token);
+
+        eat(ID);
+        while (current_token.type == COMMA)
+        {
+            eat(COMMA);
+            param_tokens.push_back(current_token);
+            eat(ID);
+        }
+
+        eat(COLON);
+        boostvar type_node = type_spec();
+
+        for (auto param_token : param_tokens)
+        {
+            boostvar param_node = new Param(new Var(param_token), type_node);
+            param_nodes.push_back(param_node);
+        }
+
+        return param_nodes;
     }
 
-    void formal_parameter()
+    vector<boostvar> formal_parameter_list()
     {
-        //formal_parameters : ID (COMMA ID)* COLON type_spec """
-        vector<boostvar> param_nodes;
+        //formal_parameter_list : formal_parameters| formal_parameters SEMI formal_parameter_list
+
+        if (!(current_token.type == ID))
+            return {};
+
+        vector<boostvar> param_nodes = formal_parameters();
+        while (current_token.type == SEMI)
+        {
+            eat(SEMI);
+            vector<boostvar> new_param_nodes = formal_parameters();
+            param_nodes.insert(param_nodes.end(), new_param_nodes.begin(), new_param_nodes.end());
+        }
+
+        return param_nodes;
     }
 
     boostvar block()
