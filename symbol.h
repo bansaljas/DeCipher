@@ -105,7 +105,7 @@ public:
             symbols[boost::get<ProcedureSymbol*>(symbol)->name] = symbol;
     }
 
-    boostvar lookup(string name, bool current_scope_only = false);
+    boostvar lookup(string name, bool procedue_check = false);
 }; 
 
 ostream& operator<<(ostream& strm, const ScopedSymbolTable& symbolTable) {
@@ -117,7 +117,7 @@ ostream& operator<<(ostream& strm, const ScopedSymbolTable& symbolTable) {
 
 stack<ScopedSymbolTable> enclosed_scopes;
 
-boostvar ScopedSymbolTable :: lookup(string name, bool current_scope_only)
+boostvar ScopedSymbolTable :: lookup(string name, bool procedure_check)
 {
     //cout << "Lookup: " << name << endl;
 
@@ -127,7 +127,8 @@ boostvar ScopedSymbolTable :: lookup(string name, bool current_scope_only)
         return symbol;
     }
 
-    if (!current_scope_only && enclosed_scopes.size() > 1) {
+    if (enclosed_scopes.size() > 1) 
+    {
         ScopedSymbolTable enclosed_scope = enclosed_scopes.top();
         enclosed_scopes.pop();
         boostvar symbol = enclosed_scope.lookup(name);
@@ -135,7 +136,12 @@ boostvar ScopedSymbolTable :: lookup(string name, bool current_scope_only)
         return symbol;
     }
 
-    error("Variable not found", name);
+    if (procedure_check)
+    {
+        cout << "ERROR:: No such function named '" << name<< "' exists." << endl;
+        _Exit(10);
+    }
+    else error("Variable not found", name);
 }
 
 class SemanticAnalyzer {
@@ -263,7 +269,7 @@ public:
     void visit_ProcedureCall(ProcedureCall* node)
     {
         string proc_name = node->proc_name;
-        boostvar proc = current_scope.lookup(proc_name);
+        boostvar proc = current_scope.lookup(proc_name, true);
        
         if (proc.which() == 15)
         {

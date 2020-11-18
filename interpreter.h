@@ -149,6 +149,16 @@ public:
         if (node->proc_symbol)
         {
             ProcedureSymbol* proc_symbol = node->proc_symbol;
+
+            if (proc_symbol->params.size() != node->actual_params.size())
+            {
+                if (proc_symbol->params.size() > node->actual_params.size())
+                    cout << "ERROR:: Too few arguments given in the function call." << endl;
+                else
+                    cout << "ERROR:: Too many arguments given in the function call." << endl;
+                _Exit(10);
+            }
+
             for (int i = 0; i < proc_symbol->params.size(); i++)
             {
                 VarSymbol* var = boost::get<VarSymbol*>(proc_symbol->params[i]);
