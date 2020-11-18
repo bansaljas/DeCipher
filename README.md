@@ -115,8 +115,18 @@ Following is a document, entailing all the work we have done till now, the vario
 
 ---
 
+<ins>**16 Novemeber 2020 - Present:**</ins>
+- **Implementation Phase 6**
+  
+   - Added functionality to handle Global as well as Functional Scopes.
+   - Introduced print statement.
+   - The process of error handling was improved.
+   - Implemented the execution of function calls.
+ 
+---
+
 ## How to Run:
 
 - The code will run on *Visual Studio Code 2019*. You need to connect the project with **C++ Boost External Library**.
 - Now give the program you'd like to evaluate in *sample.txt* file.
-- Now, we can run the *main.cpp* file.
+- Now, we can run the *main.cpp* file and get the desired output.
