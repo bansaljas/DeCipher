@@ -6,7 +6,6 @@
    ###############################
 */
 
-//enum used in original code
 class ARType
 {
 public:
@@ -22,7 +21,10 @@ public:
     int nestingLevel;
     unordered_map<string, float> members;
 
-    ActivationRecord(){}
+    ActivationRecord()
+    {
+        this->nestingLevel = 0;
+    }
 
     ActivationRecord(string name, string type, int nestingLevel) 
     {
@@ -48,22 +50,21 @@ class CallStack
 {
 
 public:
-    stack<ActivationRecord> records;
+    stack<ActivationRecord*> records;
 
-    //Name of function can be changed, to avoid recursion
-    void push(ActivationRecord ar)
+    void push(ActivationRecord* ar)
     {
         this->records.push(ar);
     }
 
-    ActivationRecord pop()
+    ActivationRecord* pop()
     {
-        ActivationRecord element = records.top();
+        ActivationRecord* element = records.top();
         records.pop();
         return element;
     }
 
-    ActivationRecord peek()
+    ActivationRecord* peek()
     {
         return records.top();
     } 
@@ -118,6 +119,8 @@ public:
             return visit_Print(boost::get<Print*>(node));
         else if (node.which() == 17)
             return visit_ProcedureCall(boost::get<ProcedureCall*>(node));
+        else if (node.which() == 18)
+            return visit_Read(boost::get<Read*>(node));
         else
             error();
     }
@@ -173,30 +176,41 @@ public:
     int visit_Assign(Assign* node)
     {
         string var_name = boost::get<Var*>(node->left)->value;
-        ActivationRecord ar = this->call_stack.peek();
-        ar.members[var_name] = visit(node->right);
-        return ar.members[var_name];
+        ActivationRecord *ar = this->call_stack.peek();
+        ar->members[var_name] = visit(node->right);
+        return 0;
+    }
+
+    int visit_Read(Read* node)
+    {
+        Var* variable = boost::get<Var*>(node->var);
+        cout << "Enter the value of " << variable->value <<": ";
+        float input_value; cin >> input_value;
+        Num* number = new Num(Token("REAL_CONST", to_string(input_value)));
+        visit_Assign(new Assign(variable, Token(ASSIGN, ":="), number));
+        return 0;
     }
 
     int visit_Print(Print* node)
     {
         Var* output = boost::get<Var*>(node->output_variable);
         cout << "\nValue of " << output->value << " is: ";
-        cout << GLOBAL_SCOPE[output->value] << endl;
+        string var_name = output->value;
+        ActivationRecord* ar = this->call_stack.peek();
+        cout << ar->members[var_name] <<endl;
         return 0;
     }
 
     int visit_Var(Var* node)
     {
         string var_name = node->value;
-        ActivationRecord ar = this->call_stack.peek();
-        //Need to make changes here, i guess... for the function to access non-local variables
-        if (ar.members.find(var_name) == ar.members.end())
+        ActivationRecord* ar = this->call_stack.peek();
+        if (ar->members.find(var_name) == ar->members.end())
         {
             cout << "ERROR:: Variable "<< var_name <<" not defined.\n";
             _Exit(10);
         }
-        return ar.members[var_name];
+        return ar->members[var_name];
     }
 
     int visit_Type(Type* node)
@@ -239,17 +253,25 @@ public:
             visit(proc_symbol->block_node);
         }*/
         string proc_name = node->proc_name;
-        ARType ar_type;
-        ActivationRecord ar(proc_name, ar_type.PROCEDURE, 2);
         ProcedureSymbol* proc_symbol = node->proc_symbol;
+
+        ActivationRecord* parent = this->call_stack.peek();
+
+        ARType ar_type;
+        ActivationRecord* ar = new ActivationRecord(proc_name, ar_type.PROCEDURE, proc_symbol->scope_level+1);
+        
         vector<boostvar> formal_params = proc_symbol->params;
         vector<boostvar> actual_params = node->actual_params;
         for (int i = 0; i < formal_params.size(); i++)
         {
             VarSymbol* var = boost::get<VarSymbol*>(formal_params[i]);
             string var_name = var->name;
-            ar.members[var_name] = visit(actual_params[i]);
+            ar->members[var_name] = visit(actual_params[i]);
         }
+
+        for (auto i : parent->members)
+            ar->members[i.first] = i.second;
+
         this->call_stack.push(ar);
         visit(proc_symbol->block_node);
         this->call_stack.pop();
@@ -269,7 +291,7 @@ public:
     {
         string program_name = node->name;
         ARType ar_object;
-        ActivationRecord ar(program_name, ar_object.PROGRAM, 1);
+        ActivationRecord* ar = new ActivationRecord(program_name, ar_object.PROGRAM, 1);
         this->call_stack.push(ar);
         visit(node->block);
         this->call_stack.pop();

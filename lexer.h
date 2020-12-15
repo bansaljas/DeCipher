@@ -24,10 +24,11 @@ class VarSymbol;
 class ProcedureDecl;
 class Param;
 class ProcedureSymbol;
+class Read;
 class Print;
 class ProcedureCall;
 
-#define boostvar boost::variant<BinOp*, Num*, UnaryOp*, Compound*, Assign*, Var*, NoOp*, Program*, Block*, VarDecl*, Type*, BuiltinTypeSymbol*, VarSymbol*, ProcedureDecl*, Param*, ProcedureSymbol*, Print*, ProcedureCall*>
+#define boostvar boost::variant<BinOp*, Num*, UnaryOp*, Compound*, Assign*, Var*, NoOp*, Program*, Block*, VarDecl*, Type*, BuiltinTypeSymbol*, VarSymbol*, ProcedureDecl*, Param*, ProcedureSymbol*, Print*, ProcedureCall*, Read*>
 
 unordered_map<string, float> GLOBAL_SCOPE;
 
@@ -39,7 +40,7 @@ unordered_map<string, float> GLOBAL_SCOPE;
 string INTEGER = "INTEGER", PLUS = "PLUS", MINUS = "MINUS", MUL = "MUL", DIV = "DIV", EOL = "EOL", LPAREN = "(", RPAREN = ")", POW = "POW", BEGIN = "BEGIN", END = "END", DOT = "DOT",
 ID = "ID", ASSIGN = "ASSIGN", SEMI = "SEMI", PROGRAM = "PROGRAM", VAR = "VAR", COLON = "COLON",
 COMMA = "COMMA", REAL = "REAL", INTEGER_CONST = "INTEGER_CONST", REAL_CONST = "REAL_CONST",
-INTEGER_DIV = "INTEGER_DIV", FLOAT_DIV = "FLOAT_DIV", PROCEDURE = "PROCEDURE", PRINT = "PRINT";
+INTEGER_DIV = "INTEGER_DIV", FLOAT_DIV = "FLOAT_DIV", PROCEDURE = "PROCEDURE", PRINT = "PRINT", READ = "READ";
 
 class Token
 {
@@ -108,6 +109,7 @@ public:
         RESERVED_KEYWORDS[END] = Token("END", END);
         RESERVED_KEYWORDS[PROCEDURE] = Token("PROCEDURE", PROCEDURE);
         RESERVED_KEYWORDS[PRINT] = Token("PRINT", PRINT);
+        RESERVED_KEYWORDS[READ] = Token("READ", READ);
     }
 
     void error()
@@ -124,7 +126,7 @@ public:
             result += current_char;
             advance();
         }
-
+   
         if (RESERVED_KEYWORDS.find(result) == RESERVED_KEYWORDS.end())
             return RESERVED_KEYWORDS[result] = Token(ID, result);
         else

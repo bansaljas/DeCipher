@@ -7,18 +7,24 @@ class Symbol
 public:
 	string name;
 	boostvar type;
+    int scope_level;
 
-	Symbol() {}
+	Symbol() 
+    {
+        this->scope_level = 0;
+    }
 
 	Symbol(string name)
 	{
 		this->name = name;
+        this->scope_level = 0;
 	}
 
 	Symbol(string name, boostvar type)
 	{
 		this->name = name;
 		this->type = type;
+        this->scope_level = 0;
 	}
 };
 
@@ -98,11 +104,23 @@ public:
     void insert(boostvar symbol)
     {
         if (symbol.which() == 11)
-            symbols[boost::get<BuiltinTypeSymbol*>(symbol)->name] = symbol;
+        {
+            BuiltinTypeSymbol* sym = boost::get<BuiltinTypeSymbol*>(symbol);
+            sym->scope_level = this->scope_level;
+            symbols[sym->name] = sym;
+        }
         else if (symbol.which() == 12)
-            symbols[boost::get<VarSymbol*>(symbol)->name] = symbol;
+        {
+            VarSymbol* sym = boost::get<VarSymbol*>(symbol);
+            sym->scope_level = this->scope_level;
+            symbols[sym->name] = sym;
+        }
         else if (symbol.which() == 15)
-            symbols[boost::get<ProcedureSymbol*>(symbol)->name] = symbol;
+        {
+            ProcedureSymbol* sym = boost::get<ProcedureSymbol*>(symbol);
+            sym->scope_level = this->scope_level;
+            symbols[sym->name] = sym;
+        }
     }
 
     boostvar lookup(string name, bool procedue_check = false);
@@ -183,6 +201,8 @@ public:
             visit_Print(boost::get<Print*>(node));
         else if (node.which() == 17)
             visit_ProcedureCall(boost::get<ProcedureCall*>(node));
+        else if (node.which() == 18)
+            visit_Read(boost::get<Read*>(node));
         else
             error("INVALID PARSING METHOD");
     }
@@ -217,6 +237,11 @@ public:
     void visit_Assign(Assign* node) {
         visit(node->left);
         visit(node->right);
+    }
+
+    void visit_Read(Read* node)
+    {
+        visit(node->var);
     }
 
     void visit_Print(Print* node)

@@ -1,20 +1,11 @@
 PROGRAM Main;
   VAR
       y: INTEGER;
-  PROCEDURE Alpha(a : INTEGER; b : INTEGER);
-    VAR
-      x : INTEGER;
+      x: INTEGER;
+BEGIN { Main }
+  READ y;
+  PRINT y;
+  x:=y+2;
+  PRINT x;
 
-    BEGIN
-      x := (a + b ) * 2;
-      PRINT x;
-      PRINT a;
-    END;
-
-  BEGIN { Main }
-    y := 3;
-    PRINT y;
-    PRINT x;
-    Alpha(3+5, 7);  { procedure call }
-
-  END. { Main }
+END. { Main }
