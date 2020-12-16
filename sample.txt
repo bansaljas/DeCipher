@@ -1,11 +1,16 @@
 PROGRAM Main;
   VAR
-      y: INTEGER;
+      y: REAL;
       x: INTEGER;
+  PROCEDURE Alpha(a:INTEGER);
+  VAR
+    z:INTEGER;
+  BEGIN
+    z:=2.3;
+    PRINT a;
+  END;
 BEGIN { Main }
-  READ y;
+  Alpha(3.14);
   PRINT y;
-  x:=y+2;
-  PRINT x;
 
 END. { Main }

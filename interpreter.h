@@ -19,7 +19,8 @@ public:
     string name;
     string type;
     int nestingLevel;
-    unordered_map<string, float> members;
+    unordered_map<string, typevar> members;
+    unordered_map<string, string> declarations;
 
     ActivationRecord()
     {
@@ -33,12 +34,12 @@ public:
         this->nestingLevel = nestingLevel;
     }
 
-    void setItem(string key, float value)
+    void setItem(string key, typevar value)
     {
         members[key] = value;
     }
 
-    float getItem(string key)
+    typevar getItem(string key)
     {
         return members[key];
     }
@@ -89,7 +90,7 @@ public:
         _Exit(10);
     }
 
-    float visit(boostvar node)
+    typevar visit(boostvar node)
     {
         if (node.which() == 0)
             return visit_BinOp(boost::get<BinOp*>(node));
@@ -125,59 +126,107 @@ public:
             error();
     }
 
-    float visit_BinOp(BinOp* node)
+    typevar visit_BinOp(BinOp* node)
     {
+        typevar left = visit(node->left);
+        typevar right = visit(node->right);
+
         if (node->op.type == PLUS)
-            return visit(node->left) + visit(node->right);
+        {
+            if (left.which() == 1 || right.which() == 1) //means one of the is float
+                return boost::get<float>(left) + boost::get<float>(right);
+            else
+                return boost::get<int>(left) + boost::get<int>(right);
+        }
         else if (node->op.type == MINUS)
-            return visit(node->left) - visit(node->right);
+        {
+            if (left.which() == 1 || right.which() == 1) //means one of the is float
+                return boost::get<float>(left) - boost::get<float>(right);
+            else
+                return boost::get<int>(left) - boost::get<int>(right);
+        }
         else if (node->op.type == MUL)
-            return visit(node->left) * visit(node->right);
+        {
+            if (left.which() == 1 || right.which() == 1) //means one of the is float
+                return boost::get<float>(left) * boost::get<float>(right);
+            else
+                return boost::get<int>(left) * boost::get<int>(right);
+        }
         else if (node->op.type == INTEGER_DIV)
-            return int(visit(node->left) / visit(node->right));
+        {
+            if (left.which() == 1 || right.which() == 1) //means one of the is float
+                return int(boost::get<float>(left) / boost::get<float>(right));
+            else
+                return boost::get<int>(left) / boost::get<int>(right);
+        }
         else if (node->op.type == FLOAT_DIV)
-            return visit(node->left) / visit(node->right);
+        {
+            if (left.which() == 1 || right.which() == 1) //means one of the is float
+                return boost::get<float>(left) / boost::get<float>(right);
+            else
+                return boost::get<int>(left) / boost::get<int>(right);
+        }
         else if (node->op.type == POW)
-            return int(pow(visit(node->left), visit(node->right)) + 0.5);
+        {
+            if (left.which() == 1 || right.which() == 1) //means one of the is float
+                return int(pow(boost::get<float>(left), boost::get<float>(right)) + 0.5);
+            else
+                return int(pow(boost::get<int>(left), boost::get<int>(right)) + 0.5);
+        }
     }
 
-    float visit_Num(Num* node)
+    typevar visit_Num(Num* node)
     {
         if (node->token.type == INTEGER_CONST)
             return stoi(node->value);
-        else
+        else if(node->token.type == REAL_CONST)
             return stof(node->value);
+        else
+        {
+            cout << "ERROR:: Invalid Input" << endl;
+            _Exit(10);
+        }
     }
 
-    int visit_UnaryOp(UnaryOp* node)
+    typevar visit_UnaryOp(UnaryOp* node)
     {
+        typevar val = visit(node->expr);
         if (node->op.type == PLUS)
         {
-            return +visit(node->expr);
+            return val;
         }
         else if (node->op.type == MINUS)
         {
-            return -visit(node->expr);
+            if (val.which() == 0) return -1 * boost::get<int>(val);
+            else return -1 * boost::get<float>(val);
         }
     }
 
-    int visit_Compound(Compound* node)
+    typevar visit_Compound(Compound* node)
     {
         for (auto child : node->children)
             visit(child);
         return 0;
     }
 
-    int visit_NoOp(NoOp* node)
+    typevar visit_NoOp(NoOp* node)
     {
         return 0;
     }
 
-    int visit_Assign(Assign* node)
+    typevar visit_Assign(Assign* node)
     {
         string var_name = boost::get<Var*>(node->left)->value;
         ActivationRecord *ar = this->call_stack.peek();
-        ar->members[var_name] = visit(node->right);
+        typevar val = visit(node->right);
+        
+        if (ar->declarations[var_name] == "INTEGER" && val.which() == 1)
+        {
+            cout << "ERROR:: Incompatible type: variable '" << var_name << "'" << endl;
+            _Exit(10);
+        }
+
+        ar->members[var_name] = val;
         return 0;
     }
 
@@ -185,8 +234,14 @@ public:
     {
         Var* variable = boost::get<Var*>(node->var);
         cout << "Enter the value of " << variable->value <<": ";
-        float input_value; cin >> input_value;
-        Num* number = new Num(Token("REAL_CONST", to_string(input_value)));
+        string input_value; cin >> input_value;
+
+        Num* number;
+        if(input_value.find('.') != string::npos)
+            number = new Num(Token("REAL_CONST", input_value));
+        else
+            number = new Num(Token("INTEGER_CONST", input_value));
+        
         visit_Assign(new Assign(variable, Token(ASSIGN, ":="), number));
         return 0;
     }
@@ -201,7 +256,7 @@ public:
         return 0;
     }
 
-    int visit_Var(Var* node)
+    typevar visit_Var(Var* node)
     {
         string var_name = node->value;
         ActivationRecord* ar = this->call_stack.peek();
@@ -220,6 +275,10 @@ public:
 
     int visit_VarDecl(VarDecl* node)
     {
+        ActivationRecord* ar = this->call_stack.peek();
+        Var* var = boost::get<Var*>(node->var_node);
+        Type* type_val = boost::get<Type*>(node->type_node);
+        ar->declarations[var->value] = type_val->value;
         return 0;
     }
 
@@ -266,7 +325,15 @@ public:
         {
             VarSymbol* var = boost::get<VarSymbol*>(formal_params[i]);
             string var_name = var->name;
-            ar->members[var_name] = visit(actual_params[i]);
+            typevar val = visit(actual_params[i]);
+            BuiltinTypeSymbol* type_val = boost::get<BuiltinTypeSymbol*>(var->type);
+            if (type_val->name == INTEGER && val.which() == 1)
+            {
+                cout << "ERROR:: Incompatible type: variable '" << var_name << "'" << endl;
+                _Exit(10);
+            }
+
+            ar->members[var_name] = val;
         }
 
         for (auto i : parent->members)
@@ -298,9 +365,8 @@ public:
         return 0;
     }
 
-    int interpret()
+    typevar interpret()
     {
         return visit(tree);
     }
-    //Have not implemented the log function that prints the call stack
 };

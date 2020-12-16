@@ -29,6 +29,7 @@ class Print;
 class ProcedureCall;
 
 #define boostvar boost::variant<BinOp*, Num*, UnaryOp*, Compound*, Assign*, Var*, NoOp*, Program*, Block*, VarDecl*, Type*, BuiltinTypeSymbol*, VarSymbol*, ProcedureDecl*, Param*, ProcedureSymbol*, Print*, ProcedureCall*, Read*>
+#define typevar boost::variant<int, float>
 
 unordered_map<string, float> GLOBAL_SCOPE;
 

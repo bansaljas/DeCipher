@@ -263,7 +263,7 @@ public:
 
         this->current_scope.insert(proc_symbol);
         enclosed_scopes.push(current_scope);
-        cout << "Enter scope: " << proc_name << endl;
+        //cout << "Enter scope: " << proc_name << endl;
 
         ScopedSymbolTable procedure_scope = ScopedSymbolTable(proc_name, this->current_scope.scope_level + 1);
         this->current_scope = procedure_scope;
@@ -288,7 +288,7 @@ public:
         this->current_scope = enclosed_scopes.top();
         enclosed_scopes.pop();
 
-        cout << "Leave scope : " << proc_name << endl;
+        //cout << "Leave scope : " << proc_name << endl;
     }
 
     void visit_ProcedureCall(ProcedureCall* node)
@@ -333,7 +333,7 @@ public:
 
     void visit_Program(Program* node)
     {
-        cout << "Enter Scope : GLOBAL" << endl;
+        //cout << "Enter Scope : GLOBAL" << endl;
         ScopedSymbolTable global_scope = ScopedSymbolTable("GLOBAL", 1);
         enclosed_scopes.push(current_scope);
         this->current_scope = global_scope;
@@ -341,6 +341,6 @@ public:
         //cout << "global_scope" << endl;
         this->current_scope = enclosed_scopes.top();
         enclosed_scopes.pop();
-        cout << "Leave scope : GLOBAL" << endl;
+        //cout << "Leave scope : GLOBAL" << endl;
     }
 };

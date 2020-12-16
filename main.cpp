@@ -18,8 +18,8 @@ int main()
     SemanticAnalyzer semantic_analyser;
     semantic_analyser.visit(tree);
     Interpreter interpreter(tree);
-    int result = interpreter.interpret();
-
+    typevar result = interpreter.interpret();
+    cout << "Your code has been Interpreted successfully!" << endl;
     //for (auto i : GLOBAL_SCOPE)
         //cout << i.first << " : " << i.second << "\n";
 }

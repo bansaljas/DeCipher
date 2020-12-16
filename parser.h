@@ -92,7 +92,7 @@ class Read : public AST
 
 public:
     boostvar var;
-    boostvar value;
+    boostvar value; //will be a Num node
 
     Read(boostvar var)
     {
@@ -568,7 +568,6 @@ private:
     vector<boostvar> formal_parameters()
     {
         //formal_parameters : ID (COMMA ID)* COLON type_spec
-
         vector<boostvar> param_nodes;
         vector<class Token> param_tokens;
         param_tokens.push_back(current_token);
