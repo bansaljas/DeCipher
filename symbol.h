@@ -203,6 +203,8 @@ public:
             visit_ProcedureCall(boost::get<ProcedureCall*>(node));
         else if (node.which() == 18)
             visit_Read(boost::get<Read*>(node));
+        else if (node.which() == 19)
+            visit_Condition(boost::get<Condition*>(node));
         else
             error("INVALID PARSING METHOD");
     }
@@ -322,6 +324,15 @@ public:
         }
         boostvar var_symbol = new VarSymbol(var_name, type_symbol);
         current_scope.insert(var_symbol);
+    }
+
+    void visit_Condition(Condition* node)
+    {
+        visit(node->condition_node);
+        for (auto statement : node->if_statements)
+            visit(statement);
+        for (auto statement : node->else_statements)
+            visit(statement);
     }
 
     void visit_Block(Block* node)

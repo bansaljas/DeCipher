@@ -1,16 +1,19 @@
 PROGRAM Main;
   VAR
       y: REAL;
-      x: INTEGER;
-  PROCEDURE Alpha(a:INTEGER);
-  VAR
-    z:INTEGER;
-  BEGIN
-    z:=2.3;
-    PRINT a;
+      x: REAL;
+  PROCEDURE Alpha(a : INTEGER);
+   VAR
+     z : INTEGER;
+   BEGIN
+     IF (a):
+       PRINT a;
+       a:=a-1;
+       Alpha(a);
+     ENDIF;
   END;
-BEGIN { Main }
-  Alpha(3.14);
-  PRINT y;
 
+BEGIN { Main }
+  y:=2;
+  Alpha(3);
 END. { Main }

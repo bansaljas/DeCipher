@@ -122,6 +122,8 @@ public:
             return visit_ProcedureCall(boost::get<ProcedureCall*>(node));
         else if (node.which() == 18)
             return visit_Read(boost::get<Read*>(node));
+        else if (node.which() == 19)
+            return visit_Condition(boost::get<Condition*>(node));
         else
             error();
     }
@@ -253,6 +255,23 @@ public:
         string var_name = output->value;
         ActivationRecord* ar = this->call_stack.peek();
         cout << ar->members[var_name] <<endl;
+        return 0;
+    }
+
+    typevar visit_Condition(Condition* node)
+    {
+        typevar condition_value = visit(node->condition_node);
+        if ((condition_value.which() == 1 && boost::get<float>(condition_value) != 0) || 
+            (condition_value.which() == 0 && boost::get<int>(condition_value) != 0))
+        {
+            for (auto statement : node->if_statements)
+                visit(statement);
+        }
+        else
+        {
+            for (auto statement : node->else_statements)
+                visit(statement);
+        }
         return 0;
     }
 

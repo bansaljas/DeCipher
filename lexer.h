@@ -1,4 +1,6 @@
 #pragma once
+#define BOOST_MPL_CFG_NO_PREPROCESSED_HEADERS
+#define BOOST_MPL_LIMIT_LIST_SIZE 30
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -27,8 +29,10 @@ class ProcedureSymbol;
 class Read;
 class Print;
 class ProcedureCall;
+class Condition;
+class Loop;
 
-#define boostvar boost::variant<BinOp*, Num*, UnaryOp*, Compound*, Assign*, Var*, NoOp*, Program*, Block*, VarDecl*, Type*, BuiltinTypeSymbol*, VarSymbol*, ProcedureDecl*, Param*, ProcedureSymbol*, Print*, ProcedureCall*, Read*>
+#define boostvar boost::variant<BinOp*, Num*, UnaryOp*, Compound*, Assign*, Var*, NoOp*, Program*, Block*, VarDecl*, Type*, BuiltinTypeSymbol*, VarSymbol*, ProcedureDecl*, Param*, ProcedureSymbol*, Print*, ProcedureCall*, Read*, Condition*, Loop*>
 #define typevar boost::variant<int, float>
 
 unordered_map<string, float> GLOBAL_SCOPE;
@@ -39,8 +43,8 @@ unordered_map<string, float> GLOBAL_SCOPE;
 */
 
 string INTEGER = "INTEGER", PLUS = "PLUS", MINUS = "MINUS", MUL = "MUL", DIV = "DIV", EOL = "EOL", LPAREN = "(", RPAREN = ")", POW = "POW", BEGIN = "BEGIN", END = "END", DOT = "DOT",
-ID = "ID", ASSIGN = "ASSIGN", SEMI = "SEMI", PROGRAM = "PROGRAM", VAR = "VAR", COLON = "COLON",
-COMMA = "COMMA", REAL = "REAL", INTEGER_CONST = "INTEGER_CONST", REAL_CONST = "REAL_CONST",
+ID = "ID", ASSIGN = "ASSIGN", SEMI = "SEMI", PROGRAM = "PROGRAM", VAR = "VAR", COLON = "COLON", WHILE = "WHILE", ENDWHILE = "ENDWHILE",
+COMMA = "COMMA", REAL = "REAL", INTEGER_CONST = "INTEGER_CONST", REAL_CONST = "REAL_CONST", IF = "IF", ELSE = "ELSE", ENDIF = "ENDIF",
 INTEGER_DIV = "INTEGER_DIV", FLOAT_DIV = "FLOAT_DIV", PROCEDURE = "PROCEDURE", PRINT = "PRINT", READ = "READ";
 
 class Token
@@ -111,6 +115,11 @@ public:
         RESERVED_KEYWORDS[PROCEDURE] = Token("PROCEDURE", PROCEDURE);
         RESERVED_KEYWORDS[PRINT] = Token("PRINT", PRINT);
         RESERVED_KEYWORDS[READ] = Token("READ", READ);
+        RESERVED_KEYWORDS[IF] = Token("IF", IF);
+        RESERVED_KEYWORDS[ELSE] = Token("ELSE", ELSE);
+        RESERVED_KEYWORDS[ENDIF] = Token("ENDIF", ENDIF);
+        RESERVED_KEYWORDS[WHILE] = Token("WHILE", WHILE);
+        RESERVED_KEYWORDS[ENDWHILE] = Token("ENDWHILE", ENDWHILE);
     }
 
     void error()

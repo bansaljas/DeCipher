@@ -126,7 +126,6 @@ public:
     }
 };
 
-
 class Type : public AST
 {
 
@@ -167,6 +166,35 @@ public:
     }
 };
 
+class Condition : public AST
+{
+
+public:
+    boostvar condition_node;
+    vector<boostvar> if_statements;
+    vector<boostvar> else_statements;
+
+    Condition(boostvar condition_node, vector<boostvar> if_statements, vector<boostvar> else_statements = {})
+    {
+        this->condition_node = condition_node;
+        this->if_statements = if_statements;
+        this->else_statements = else_statements;
+    }
+};
+
+class Loop : public AST
+{
+public:
+    boostvar condition_node;
+    vector<boostvar> statements;
+
+    Loop(boostvar condition_node, vector<boostvar> statements)
+    {
+        this->condition_node = condition_node;
+        this->statements = statements;
+    }
+};
+
 class Var : public AST
 {
 
@@ -182,9 +210,7 @@ public:
 };
 
 class NoOp : public AST
-{
-
-};
+{};
 
 class BinOp : public AST
 {
@@ -392,15 +418,38 @@ private:
         return node;
     }
 
+    boostvar conditional_statement()
+    {
+        //conditional_statement : IF LPAREN expr RPAREN COLON statement_list ENDIF
+        eat(IF);
+        eat(LPAREN);
+        boostvar condition_node = expr();
+        eat(RPAREN);
+        eat(COLON);
+        vector<boostvar> if_statements = statement_list();
+        vector<boostvar> else_statements = {};
+        if (current_token.type == ELSE)
+        {
+            eat(ELSE);
+            eat(COLON);
+            else_statements = statement_list();
+        }
+        eat(ENDIF);
+        boostvar node = new Condition(condition_node, if_statements, else_statements);
+        return node;
+    }
+
     boostvar statement()
     {
-        //statement: compound_statement | assignment_statement | read_statement | print_statement | proccall_statement | empty
+        //statement: compound_statement | assignment_statement | read_statement | print_statement | proccall_statement | conditional_statement | empty
         boostvar node;
        
         if (current_token.type == BEGIN)
             node = compound_statement();
         else  if (current_token.type == READ)
             node = read_statement();
+        else if (current_token.type == IF)
+            node = conditional_statement();
         else if (current_token.type == PRINT)
             node = print_statement();
         else if (current_token.type == ID && this->lexer.current_char == '(')
