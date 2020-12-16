@@ -115,7 +115,7 @@ Following is a document, entailing all the work we have done till now, the vario
 
 ---
 
-<ins>**16 Novemeber 2020 - Present:**</ins>
+<ins>**16 Novemeber 2020 - 30 November 2020:**</ins>
 - **Implementation Phase 6**
   
    - Added functionality to handle Global as well as Functional Scopes.
@@ -124,6 +124,14 @@ Following is a document, entailing all the work we have done till now, the vario
    - Implemented the execution of function calls.
  
 ---
+
+<ins>**1 December 2020 - Present:**</ins>
+- **Implementation Phase 7**
+
+   - Improved the memory system by introducing call stack.
+   - Implemented nested procedure call.
+   - Introduced read statement for taking input from the user.
+   - Aceesing non-local variables for functions.
 
 ## How to Run:
 
