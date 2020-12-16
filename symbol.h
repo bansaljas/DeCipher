@@ -205,6 +205,8 @@ public:
             visit_Read(boost::get<Read*>(node));
         else if (node.which() == 19)
             visit_Condition(boost::get<Condition*>(node));
+        else if (node.which() == 20)
+            visit_Loop(boost::get<Loop*>(node));
         else
             error("INVALID PARSING METHOD");
     }
@@ -332,6 +334,13 @@ public:
         for (auto statement : node->if_statements)
             visit(statement);
         for (auto statement : node->else_statements)
+            visit(statement);
+    }
+
+    void visit_Loop(Loop* node)
+    {
+        visit(node->condition_node);
+        for (auto statement : node->statements)
             visit(statement);
     }
 

@@ -439,9 +439,24 @@ private:
         return node;
     }
 
+    boostvar loop_statement()
+    {
+        //loop_statement: WHILE LPAREN expr RPAREN COLON statement_list ENDWHILE
+        eat(WHILE);
+        eat(LPAREN);
+        boostvar condition_node = expr();
+        eat(RPAREN);
+        eat(COLON);
+        vector<boostvar> statements = statement_list();
+        eat(ENDWHILE);
+
+        boostvar node = new Loop(condition_node, statements);
+        return node;
+    }
+
     boostvar statement()
     {
-        //statement: compound_statement | assignment_statement | read_statement | print_statement | proccall_statement | conditional_statement | empty
+        //statement: compound_statement | assignment_statement | read_statement | print_statement | proccall_statement | conditional_statement| loop_statement | empty
         boostvar node;
        
         if (current_token.type == BEGIN)
@@ -450,6 +465,8 @@ private:
             node = read_statement();
         else if (current_token.type == IF)
             node = conditional_statement();
+        else if (current_token.type == WHILE)
+            node = loop_statement();
         else if (current_token.type == PRINT)
             node = print_statement();
         else if (current_token.type == ID && this->lexer.current_char == '(')
