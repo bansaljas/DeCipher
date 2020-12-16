@@ -131,7 +131,7 @@ Following is a document, entailing all the work we have done till now, the vario
    - Improved the memory system by introducing call stack.
    - Implemented nested procedure call.
    - Introduced read statement for taking input from the user.
-   - Aceesing non-local variables for functions.
+   - Accesing non-local variables for functions.
 
 ## How to Run:
 
