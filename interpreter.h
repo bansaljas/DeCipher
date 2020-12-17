@@ -126,6 +126,8 @@ public:
             return visit_Condition(boost::get<Condition*>(node));
         else if (node.which() == 20)
             return visit_Loop(boost::get<Loop*>(node));
+        else if (node.which() == 21)
+            return visit_Message(boost::get<Message*>(node));
         else
             error();
     }
@@ -234,7 +236,12 @@ public:
         return 0;
     }
 
-    int visit_Read(Read* node)
+    typevar visit_Message(Message* node)
+    {
+        return node->msg;
+    }
+
+    typevar visit_Read(Read* node)
     {
         Var* variable = boost::get<Var*>(node->var);
         cout << "Enter the value of " << variable->value <<": ";
@@ -250,13 +257,17 @@ public:
         return 0;
     }
 
-    int visit_Print(Print* node)
+    typevar visit_Print(Print* node)
     {
-        Var* output = boost::get<Var*>(node->output_variable);
-        cout << "Value of " << output->value << " is: ";
-        string var_name = output->value;
-        ActivationRecord* ar = this->call_stack.peek();
-        cout << ar->members[var_name] <<endl;
+        for (auto message : node->messages)
+        {
+            typevar output = visit(message);
+            if (output.which() == 0) cout << boost::get<int>(output) << " ";
+            else if (output.which() == 1) cout << boost::get<float>(output) << " ";
+            else cout << boost::get<string>(output);
+        }
+        cout << endl;
+        
         return 0;
     }
 

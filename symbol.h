@@ -207,6 +207,8 @@ public:
             visit_Condition(boost::get<Condition*>(node));
         else if (node.which() == 20)
             visit_Loop(boost::get<Loop*>(node));
+        else if (node.which() == 21)
+            visit_Message(boost::get<Message*>(node));
         else
             error("INVALID PARSING METHOD");
     }
@@ -243,6 +245,11 @@ public:
         visit(node->right);
     }
 
+    void visit_Message(Message* node)
+    {
+        return;
+    }
+
     void visit_Read(Read* node)
     {
         visit(node->var);
@@ -250,7 +257,8 @@ public:
 
     void visit_Print(Print* node)
     {
-        visit(node->output_variable);
+        for (auto message : node->messages)
+            visit(message);
     }
 
     void visit_Var(Var* node) 

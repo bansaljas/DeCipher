@@ -87,6 +87,23 @@ public:
     }
 };
 
+class Message : public AST
+{
+
+public:
+    string msg;
+
+    Message()
+    {
+        this->msg = "";
+    }
+
+    Message(string msg)
+    {
+        this->msg = msg;
+    }
+};
+
 class Read : public AST
 {
 
@@ -104,11 +121,11 @@ class Print : public AST
 {
 
 public:
-    boostvar output_variable;
+    vector<boostvar> messages;
 
-    Print(boostvar output_variable)
+    Print(vector<boostvar> messages = {})
     {
-        this->output_variable = output_variable;
+        this->messages = messages;
     }
 };
 
@@ -337,7 +354,7 @@ private:
 
     boostvar term()
     {
-        //term: factor factor ((MUL | INTEGER_DIV | FLOAT_DIV) factor)
+        //term: factor ((MUL | INTEGER_DIV | FLOAT_DIV) factor)
 
         boostvar node = factor();
 
@@ -399,6 +416,18 @@ private:
         return node;
     }
 
+    boostvar read_message()
+    {
+        string msg = "";
+        while (current_token.type != QUOTE)
+        {
+            msg += current_token.value;
+            eat(current_token.type);
+            msg += " ";
+        }
+        return new Message(msg);
+    }
+
     boostvar read_statement()
     {
         //read_statement: READ variable
@@ -410,11 +439,31 @@ private:
 
     boostvar print_statement()
     {
-        //print_statement: PRINT expr
-        Token token = current_token;
+        //print_statement: PRINT (message | expr) (SEP expr | message)*
         eat(PRINT);
-        boostvar output_variable = expr();
-        boostvar node = new Print(output_variable);
+        vector<boostvar> messages = {};
+  
+        if (current_token.type == QUOTE)
+        {
+            eat(QUOTE);
+            messages.push_back(read_message());
+            eat(QUOTE);
+        }
+        else messages.push_back(expr());
+
+        while (current_token.type == SEP)
+        {
+            eat(SEP);
+            if (current_token.type == QUOTE)
+            {
+                eat(QUOTE);
+                messages.push_back(read_message());
+                eat(QUOTE);
+            }
+            else messages.push_back(expr());
+        }
+       
+        boostvar node = new Print(messages);
         return node;
     }
 

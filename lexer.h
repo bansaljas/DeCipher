@@ -31,9 +31,10 @@ class Print;
 class ProcedureCall;
 class Condition;
 class Loop;
+class Message;
 
-#define boostvar boost::variant<BinOp*, Num*, UnaryOp*, Compound*, Assign*, Var*, NoOp*, Program*, Block*, VarDecl*, Type*, BuiltinTypeSymbol*, VarSymbol*, ProcedureDecl*, Param*, ProcedureSymbol*, Print*, ProcedureCall*, Read*, Condition*, Loop*>
-#define typevar boost::variant<int, float>
+#define boostvar boost::variant<BinOp*, Num*, UnaryOp*, Compound*, Assign*, Var*, NoOp*, Program*, Block*, VarDecl*, Type*, BuiltinTypeSymbol*, VarSymbol*, ProcedureDecl*, Param*, ProcedureSymbol*, Print*, ProcedureCall*, Read*, Condition*, Loop*, Message*>
+#define typevar boost::variant<int, float, string>
 
 unordered_map<string, float> GLOBAL_SCOPE;
 
@@ -45,7 +46,7 @@ unordered_map<string, float> GLOBAL_SCOPE;
 string INTEGER = "INTEGER", PLUS = "PLUS", MINUS = "MINUS", MUL = "MUL", DIV = "DIV", EOL = "EOL", LPAREN = "(", RPAREN = ")", POW = "POW", BEGIN = "BEGIN", END = "END", DOT = "DOT",
 ID = "ID", ASSIGN = "ASSIGN", SEMI = "SEMI", PROGRAM = "PROGRAM", VAR = "VAR", COLON = "COLON", WHILE = "WHILE", ENDWHILE = "ENDWHILE",
 COMMA = "COMMA", REAL = "REAL", INTEGER_CONST = "INTEGER_CONST", REAL_CONST = "REAL_CONST", IF = "IF", ELSE = "ELSE", ENDIF = "ENDIF",
-INTEGER_DIV = "INTEGER_DIV", FLOAT_DIV = "FLOAT_DIV", PROCEDURE = "PROCEDURE", PRINT = "PRINT", READ = "READ";
+INTEGER_DIV = "INTEGER_DIV", FLOAT_DIV = "FLOAT_DIV", PROCEDURE = "PROCEDURE", PRINT = "PRINT", READ = "READ", QUOTE = "QUOTE", SEP = "SEP";
 
 class Token
 {
@@ -300,6 +301,14 @@ public:
             return token;
         }
 
+        if (current_char == '<' && peek() == '<')
+        {
+            Token token(SEP, "<<");
+            advance();
+            advance();
+            return token;
+        }
+
         if (current_char == ';')
         {
             Token token(SEMI, ";");
@@ -331,6 +340,13 @@ public:
         if (current_char == '/')
         {
             Token token(FLOAT_DIV, "/");
+            advance();
+            return token;
+        }
+
+        if (current_char == '"')
+        {
+            Token token(QUOTE, "\"");
             advance();
             return token;
         }

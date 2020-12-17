@@ -4,10 +4,8 @@ PROGRAM Main;
       x: REAL;
   
 BEGIN { Main }
-  y:=4;
-  x:=5;
-  WHILE (y):
-    PRINT x;
-    y:=y-1;
-  ENDWHILE;
+   y := 2;
+   x := 3;
+   PRINT "Let us see the output";
+   PRINT "Addition will be: " << x+y << "FIVE";
 END. { Main }
