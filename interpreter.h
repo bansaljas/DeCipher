@@ -43,8 +43,6 @@ public:
     {
         return members[key];
     }
-    //can add get function which does not throw exception if key not found
-    //can also add function for printing the activation record
 };
 
 class CallStack 
@@ -333,29 +331,6 @@ public:
 
     int visit_ProcedureCall(ProcedureCall* node)
     {
-        /*if (node->proc_symbol)
-        {
-            ProcedureSymbol* proc_symbol = node->proc_symbol;
-
-            if (proc_symbol->params.size() != node->actual_params.size())
-            {
-                if (proc_symbol->params.size() > node->actual_params.size())
-                    cout << "ERROR:: Too few arguments given in the function call." << endl;
-                else
-                    cout << "ERROR:: Too many arguments given in the function call." << endl;
-                _Exit(10);
-            }
-
-            for (int i = 0; i < proc_symbol->params.size(); i++)
-            {
-                VarSymbol* var = boost::get<VarSymbol*>(proc_symbol->params[i]);
-                string var_name = var->name;
-                boostvar assign_var = new Var(Token(ID, var_name));
-                visit_Assign(new Assign(assign_var, Token(ASSIGN, ":="), node->actual_params[i]));
-            }
-
-            visit(proc_symbol->block_node);
-        }*/
         string proc_name = node->proc_name;
         ProcedureSymbol* proc_symbol = node->proc_symbol;
 
@@ -366,6 +341,16 @@ public:
         
         vector<boostvar> formal_params = proc_symbol->params;
         vector<boostvar> actual_params = node->actual_params;
+
+        if (formal_params.size() != actual_params.size())
+        {
+            if (formal_params.size() > actual_params.size())
+                cout << "ERROR:: Too few arguments given in the function call." << endl;
+            else
+                cout << "ERROR:: Too many arguments given in the function call." << endl;
+            _Exit(10);
+        }
+
         for (int i = 0; i < formal_params.size(); i++)
         {
             VarSymbol* var = boost::get<VarSymbol*>(formal_params[i]);

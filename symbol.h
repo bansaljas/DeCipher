@@ -243,6 +243,20 @@ public:
     void visit_Assign(Assign* node) {
         visit(node->left);
         visit(node->right);
+        if (node->right.which() == 5)
+        {
+            string var_name_right = boost::get<Var*>(node->right)->value;
+            VarSymbol* var_sym_right = boost::get<VarSymbol*>(this->current_scope.lookup(var_name_right));
+            string var_name_left = boost::get<Var*>(node->left)->value;
+            VarSymbol* var_sym_left = boost::get<VarSymbol*>(this->current_scope.lookup(var_name_left));
+            BuiltinTypeSymbol* type_val_left = boost::get<BuiltinTypeSymbol*>(var_sym_left->type);
+            BuiltinTypeSymbol* type_val_right = boost::get<BuiltinTypeSymbol*>(var_sym_right->type);
+            if (type_val_left->name != type_val_right->name)
+            {
+                cout << "ERROR:: Incompatible types: " << var_name_right << " assignment to " << var_name_left << endl;
+                _Exit(10);
+            }
+        }
     }
 
     void visit_Message(Message* node)
