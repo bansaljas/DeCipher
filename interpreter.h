@@ -67,7 +67,6 @@ public:
     {
         return records.top();
     } 
-    //can add function for printing the stack
 };
 
 
@@ -173,7 +172,7 @@ public:
         else if (node->op.type == POW)
         {
             if (left.which() == 1 || right.which() == 1) //means one of the is float
-                return int(pow(boost::get<float>(left), boost::get<float>(right)) + 0.5);
+                return int(pow(boost::get<float>(left), boost::get<int>(right)) + 0.5);
             else
                 return int(pow(boost::get<int>(left), boost::get<int>(right)) + 0.5);
         }
@@ -242,7 +241,6 @@ public:
     typevar visit_Read(Read* node)
     {
         Var* variable = boost::get<Var*>(node->var);
-        cout << "Enter the value of " << variable->value <<": ";
         string input_value; cin >> input_value;
 
         Num* number;

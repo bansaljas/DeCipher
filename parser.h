@@ -57,7 +57,6 @@ class ProcedureDecl : public AST
 {
 
 public:
-
     string proc_name;
     boostvar block_node;
     vector<boostvar> params;
@@ -201,6 +200,7 @@ public:
 
 class Loop : public AST
 {
+
 public:
     boostvar condition_node;
     vector<boostvar> statements;
@@ -417,7 +417,8 @@ private:
     }
 
     boostvar read_message()
-    {
+    {  
+        //message : (QUOTE ID QUOTE)*
         string msg = "";
         while (current_token.type != QUOTE)
         {
@@ -657,7 +658,7 @@ private:
 
     vector<boostvar> declarations()
     {
-        //declarations: (VAR(variable_declaration SEMI) + )*| (PROCEDURE ID(LPAREN formal_parameter_list RPAREN) ? SEMI block SEMI) *| empty
+        //declarations: (VAR(variable_declaration SEMI)+ )*| (PROCEDURE ID(LPAREN formal_parameter_list RPAREN) ? SEMI block SEMI) *| empty
         vector<boostvar> declarations;
         if (current_token.type == VAR)
         {

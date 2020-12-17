@@ -138,7 +138,6 @@ stack<ScopedSymbolTable> enclosed_scopes;
 boostvar ScopedSymbolTable :: lookup(string name, bool procedure_check)
 {
     //cout << "Lookup: " << name << endl;
-
     if (symbols.find(name) != symbols.end())
     {
         boostvar symbol = symbols[name];
@@ -304,7 +303,7 @@ public:
             string param_name = var_node->value;
 
             VarSymbol* var_symbol = new VarSymbol(param_name, param_type);
-            this->current_scope.insert(var_symbol);//needs to be sorted
+            this->current_scope.insert(var_symbol);
 
             proc_symbol->params.push_back(var_symbol);
         }
